@@ -22,6 +22,7 @@ export default (): ExpoConfig => {
       supabaseUrl: publicEnv?.supabaseUrl,
       supabaseAnonKey: publicEnv?.supabaseAnonKey,
       easUpdateChannel: publicEnv?.easUpdateChannel ?? 'development',
+      e2eSessionOverride: process.env.E2E_SESSION_OVERRIDE,
     },
   };
 };

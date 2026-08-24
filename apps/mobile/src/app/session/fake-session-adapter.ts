@@ -1,13 +1,13 @@
 import type { SessionAdapter, SessionState, SessionUser } from './session-facade';
 
 export class FakeSessionAdapter implements SessionAdapter {
-  private status: SessionState['status'] = 'loading';
+  private status: SessionState['status'] = 'signedOut';
   private offline = false;
   private failBootstrap = false;
   private user: SessionUser | null = null;
 
   reset(): void {
-    this.status = 'loading';
+    this.status = 'signedOut';
     this.offline = false;
     this.failBootstrap = false;
     this.user = null;

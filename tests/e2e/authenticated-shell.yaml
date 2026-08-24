@@ -1,0 +1,10 @@
+# Mocked authenticated shell smoke.
+# Requires a development build created with E2E_SESSION_OVERRIDE=signedIn
+# (the override is embedded at build time via app.config.ts extra).
+appId: id.financeapp.mobile
+name: Mocked authenticated shell smoke
+---
+- launchApp
+- assertVisible: 'Beranda'
+- assertVisible: 'Ruang pribadi'
+- assertNotVisible: 'Catat cepat, pahami uangmu, rencanakan dengan tenang.'

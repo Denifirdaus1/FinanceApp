@@ -10,6 +10,7 @@ import {
 
 import type { SessionAdapter, SessionState } from '../session/session-facade';
 import { defaultSessionAdapter } from '../session/fake-session-adapter';
+import { getE2eSessionOverride } from '../session/e2e-session-override';
 
 export interface SessionContextValue {
   state: SessionState;
@@ -40,7 +41,7 @@ export function SessionProvider({
       .bootstrap()
       .then((next) => {
         if (!cancelled) {
-          setState(next);
+          setState(getE2eSessionOverride() ?? next);
         }
       })
       .catch(() => {

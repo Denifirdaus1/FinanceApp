@@ -16,7 +16,7 @@
     "test:unit": "node scripts/test-unit.mjs",
     "test:feature": "node scripts/test-feature.mjs",
     "supabase:test": "supabase db reset && supabase test db",
-    "test:contract": "node scripts/test-contract.mjs",
+    "test:contract": "pnpm --filter @financeapp/contracts test:unit",
     "test:e2e:smoke": "maestro test tests/e2e/smoke.yaml",
     "test:e2e:feature": "node scripts/test-e2e-feature.mjs",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm supabase:test && pnpm test:contract && pnpm test:e2e:smoke"
@@ -29,8 +29,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@react-native/metro-config": "0.85.3",
-      "jest-environment-node": "30.4.1"
+      "@react-native/metro-config": "0.85.3"
     }
   }
 }
