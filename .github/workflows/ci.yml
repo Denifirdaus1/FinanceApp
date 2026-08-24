@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -18,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
       - name: Setup pnpm
         uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
@@ -49,10 +54,12 @@ jobs:
           EXPO_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ci_placeholder_key_0000000000000000
           EXPO_PUBLIC_EAS_UPDATE_CHANNEL: development
         run: npx expo export --platform android --output-dir .expo-smoke-dist
-      - name: Secret scan
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Secret scan (gitleaks history + tree)
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks git --source . --log-opts=--all --report-format json --report-path /tmp/gitleaks-history.json
+          /tmp/gitleaks detect --source . --report-format json --report-path /tmp/gitleaks-tree.json
 
   supabase:
     name: Supabase migration and pgTAP
@@ -64,7 +71,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
         with:
-          version: latest
+          version: v2.115.0
       - name: Start local stack
         run: supabase start
       - name: Reset database from migrations

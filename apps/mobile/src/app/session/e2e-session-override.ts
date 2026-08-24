@@ -5,6 +5,9 @@ import type { SessionState } from './session-facade';
 const VALID_OVERRIDES = new Set(['loading', 'signedOut', 'signedIn', 'revoked', 'error']);
 
 export function getE2eSessionOverride(): SessionState | null {
+  if (!__DEV__) {
+    return null;
+  }
   const override = Constants.expoConfig?.extra?.e2eSessionOverride;
   if (typeof override !== 'string' || !VALID_OVERRIDES.has(override)) {
     return null;

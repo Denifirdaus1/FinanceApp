@@ -9,20 +9,22 @@ export default (): ExpoConfig => {
   try {
     publicEnv = loadEnv(process.env);
   } catch (error) {
-    if (process.env.EXPO_PUBLIC_APP_ENV === 'production') {
+    const appEnv = process.env.EXPO_PUBLIC_APP_ENV;
+    if (appEnv === 'production' || appEnv === 'preview') {
       throw error;
     }
     publicEnv = null;
   }
+  const appEnv = publicEnv?.appEnv ?? 'development';
   return {
     ...base,
     extra: {
       ...base.extra,
-      appEnv: publicEnv?.appEnv ?? 'development',
+      appEnv,
       supabaseUrl: publicEnv?.supabaseUrl,
       supabaseAnonKey: publicEnv?.supabaseAnonKey,
       easUpdateChannel: publicEnv?.easUpdateChannel ?? 'development',
-      e2eSessionOverride: process.env.E2E_SESSION_OVERRIDE,
+      e2eSessionOverride: appEnv === 'development' ? process.env.E2E_SESSION_OVERRIDE : undefined,
     },
   };
 };
