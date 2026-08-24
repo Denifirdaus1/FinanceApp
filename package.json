@@ -29,7 +29,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@react-native/metro-config": "0.85.3"
+      "@react-native/metro-config": "0.85.3",
+      "jest-environment-node": "30.4.1"
     }
   }
 }
