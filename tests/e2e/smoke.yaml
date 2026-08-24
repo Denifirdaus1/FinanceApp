@@ -1,10 +1,15 @@
 # FinanceApp launch smoke.
 # Requires a development build (Expo Go is not an acceptance environment).
 # Default dev session is signed out, so this flow lands on the public route.
-appId: id.financeapp.mobile
+appId: id.financeapp.mobile.dev
 name: Launch and public route smoke
 ---
-- launchApp
+- launchApp:
+    clearState: true
 - assertVisible: 'FinanceApp'
 - assertVisible: 'Catat cepat, pahami uangmu, rencanakan dengan tenang.'
 - assertNotVisible: 'Beranda'
+- stopApp
+- openLink: financeapp-dev://
+- assertVisible: 'FinanceApp'
+- assertVisible: 'Catat cepat, pahami uangmu, rencanakan dengan tenang.'

@@ -49,6 +49,15 @@ describe('app config environment boundary', () => {
     expect(config.extra?.e2eSessionOverride).toBeUndefined();
   });
 
+  it('uses an isolated development app identity and exact auth callback', () => {
+    setEnv(DEV_ENV);
+    const config = appConfig();
+    expect(config.scheme).toBe('financeapp-dev');
+    expect(config.android?.package).toBe('id.financeapp.mobile.dev');
+    expect(config.ios?.bundleIdentifier).toBe('id.financeapp.mobile.dev');
+    expect(config.extra?.authRedirectUrl).toBe('financeapp-dev://auth/callback');
+  });
+
   it('never embeds the override in preview builds', () => {
     setEnv({
       EXPO_PUBLIC_APP_ENV: 'preview',
@@ -60,6 +69,10 @@ describe('app config environment boundary', () => {
     const config = appConfig();
     expect(config.extra?.appEnv).toBe('preview');
     expect(config.extra?.e2eSessionOverride).toBeUndefined();
+    expect(config.scheme).toBe('financeapp-preview');
+    expect(config.android?.package).toBe('id.financeapp.mobile.preview');
+    expect(config.ios?.bundleIdentifier).toBe('id.financeapp.mobile.preview');
+    expect(config.extra?.authRedirectUrl).toBe('financeapp-preview://auth/callback');
   });
 
   it('never embeds the override in production builds', () => {
@@ -73,6 +86,27 @@ describe('app config environment boundary', () => {
     const config = appConfig();
     expect(config.extra?.appEnv).toBe('production');
     expect(config.extra?.e2eSessionOverride).toBeUndefined();
+    expect(config.scheme).toBe('financeapp');
+    expect(config.android?.package).toBe('id.financeapp.mobile');
+    expect(config.ios?.bundleIdentifier).toBe('id.financeapp.mobile');
+    expect(config.extra?.authRedirectUrl).toBe('financeapp://auth/callback');
+  });
+
+  it('binds OTA updates to the native fingerprint and enables Apple Sign-In on iOS', () => {
+    setEnv(DEV_ENV);
+    const config = appConfig();
+    expect(config.owner).toBe('denifirdaus');
+    expect(config.runtimeVersion).toEqual({ policy: 'fingerprint' });
+    expect(config.updates).toMatchObject({
+      checkAutomatically: 'ON_LOAD',
+      fallbackToCacheTimeout: 0,
+      url: 'https://u.expo.dev/de64cde1-0152-4944-9f4d-0350b2b3bdf0',
+    });
+    expect(config.extra?.eas).toEqual({
+      projectId: 'de64cde1-0152-4944-9f4d-0350b2b3bdf0',
+    });
+    expect(config.ios?.usesAppleSignIn).toBe(true);
+    expect(config.plugins).toContain('expo-apple-authentication');
   });
 
   it('fails closed when production environment is invalid', () => {

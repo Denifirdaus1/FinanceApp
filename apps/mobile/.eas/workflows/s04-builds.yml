@@ -1,0 +1,19 @@
+name: S04 development builds
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build_android:
+    name: Build Android development client
+    type: build
+    params:
+      platform: android
+      profile: development
+
+  build_ios_simulator:
+    name: Build iOS simulator development client
+    type: build
+    params:
+      platform: ios
+      profile: development-simulator
