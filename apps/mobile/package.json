@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@financeapp/config": "workspace:*",
     "expo": "~56.0.20",
     "expo-constants": "~56.0.24",
     "expo-linking": "~56.0.17",

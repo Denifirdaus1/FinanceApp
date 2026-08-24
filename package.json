@@ -13,7 +13,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck",
-    "test:unit": "pnpm -r --if-present test:unit",
+    "test:unit": "node scripts/test-unit.mjs",
     "test:feature": "node scripts/test-feature.mjs",
     "supabase:test": "supabase db reset && supabase test db",
     "test:contract": "node scripts/test-contract.mjs",

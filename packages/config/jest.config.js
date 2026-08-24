@@ -1,0 +1,9 @@
+module.exports = {
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src'],
+  testMatch: ['**/*.test.ts'],
+  transform: {
+    '^.+\\.tsx?$': 'babel-jest',
+  },
+  collectCoverageFrom: ['src/**/*.ts'],
+};
