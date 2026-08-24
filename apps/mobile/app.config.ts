@@ -57,17 +57,17 @@ export default (): ExpoConfig => {
   }
   const appEnv: AppEnvironment = publicEnv?.appEnv ?? 'development';
   const variant = APP_VARIANTS[appEnv];
+  const otaUpdatesEnabled = appEnv !== 'development';
   return {
     ...base,
     scheme: variant.scheme,
-    runtimeVersion: {
-      policy: 'fingerprint',
-    },
+    runtimeVersion: otaUpdatesEnabled ? { policy: 'fingerprint' } : undefined,
     updates: {
       ...base.updates,
-      checkAutomatically: 'ON_LOAD',
+      enabled: otaUpdatesEnabled,
+      checkAutomatically: otaUpdatesEnabled ? 'ON_LOAD' : 'NEVER',
       fallbackToCacheTimeout: 0,
-      url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+      url: otaUpdatesEnabled ? `https://u.expo.dev/${EAS_PROJECT_ID}` : undefined,
     },
     plugins: [...(base.plugins ?? []), 'expo-apple-authentication'],
     ios: {

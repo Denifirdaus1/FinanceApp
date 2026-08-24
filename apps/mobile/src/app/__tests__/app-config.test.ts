@@ -92,22 +92,40 @@ describe('app config environment boundary', () => {
     expect(config.extra?.authRedirectUrl).toBe('financeapp://auth/callback');
   });
 
-  it('binds OTA updates to the native fingerprint and enables Apple Sign-In on iOS', () => {
+  it('keeps the development client off OTA while enabling Apple Sign-In on iOS', () => {
     setEnv(DEV_ENV);
     const config = appConfig();
     expect(config.owner).toBe('denifirdaus');
-    expect(config.runtimeVersion).toEqual({ policy: 'fingerprint' });
+    expect(config.runtimeVersion).toBeUndefined();
     expect(config.updates).toMatchObject({
-      checkAutomatically: 'ON_LOAD',
+      enabled: false,
+      checkAutomatically: 'NEVER',
       fallbackToCacheTimeout: 0,
-      url: 'https://u.expo.dev/de64cde1-0152-4944-9f4d-0350b2b3bdf0',
     });
+    expect(config.updates?.url).toBeUndefined();
     expect(config.extra?.eas).toEqual({
       projectId: 'de64cde1-0152-4944-9f4d-0350b2b3bdf0',
     });
     expect(config.ios?.usesAppleSignIn).toBe(true);
     expect(config.ios?.config?.usesNonExemptEncryption).toBe(false);
     expect(config.plugins).toContain('expo-apple-authentication');
+  });
+
+  it('binds preview and production OTA updates to the native fingerprint', () => {
+    setEnv({
+      EXPO_PUBLIC_APP_ENV: 'preview',
+      EXPO_PUBLIC_SUPABASE_URL: 'https://preview.supabase.co',
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: 'sb_publishable_config-test-key-0000000000000000',
+      EXPO_PUBLIC_EAS_UPDATE_CHANNEL: 'preview',
+    });
+    const config = appConfig();
+    expect(config.runtimeVersion).toEqual({ policy: 'fingerprint' });
+    expect(config.updates).toMatchObject({
+      enabled: true,
+      checkAutomatically: 'ON_LOAD',
+      fallbackToCacheTimeout: 0,
+      url: 'https://u.expo.dev/de64cde1-0152-4944-9f4d-0350b2b3bdf0',
+    });
   });
 
   it('fails closed when production environment is invalid', () => {
