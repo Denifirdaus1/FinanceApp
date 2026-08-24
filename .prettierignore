@@ -1,0 +1,9 @@
+node_modules/
+pnpm-lock.yaml
+.expo/
+.expo-smoke-dist/
+dist/
+coverage/
+*.tsbuildinfo
+docs/
+prd.md

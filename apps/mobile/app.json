@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "FinanceApp",
+    "slug": "financeapp",
+    "version": "0.1.0",
+    "scheme": "financeapp",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "id.financeapp.mobile"
+    },
+    "android": {
+      "package": "id.financeapp.mobile"
+    },
+    "plugins": ["expo-router"]
+  }
+}

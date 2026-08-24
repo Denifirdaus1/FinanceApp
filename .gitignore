@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+
+# local tooling state (opencode CLI auth/config, never commit)
+.opencode/
+
+# expo
+.expo/
+dist/
+.expo-smoke-dist/
+web-build/
+expo-env.d.ts
+apps/mobile/ios/
+apps/mobile/android/
+
+# builds
+*.tsbuildinfo
+build/
+
+# tests
+coverage/
+
+# environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

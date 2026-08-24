@@ -1,0 +1,11 @@
+{
+  "name": "@financeapp/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Environment validation (Zod) and runtime configuration for FinanceApp.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

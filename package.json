@@ -1,0 +1,35 @@
+{
+  "name": "financeapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FinanceApp monorepo: Expo mobile shell, pure domain packages, sync engine, and Supabase infrastructure.",
+  "packageManager": "pnpm@10.18.3",
+  "engines": {
+    "node": ">=20.19.4",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r typecheck",
+    "test:unit": "pnpm -r --if-present test:unit",
+    "test:feature": "node scripts/test-feature.mjs",
+    "supabase:test": "supabase db reset && supabase test db",
+    "test:contract": "node scripts/test-contract.mjs",
+    "test:e2e:smoke": "maestro test tests/e2e/smoke.yaml",
+    "test:e2e:feature": "node scripts/test-e2e-feature.mjs",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm supabase:test && pnpm test:contract && pnpm test:e2e:smoke"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "56.0.4",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "@react-native/metro-config": "0.85.3"
+    }
+  }
+}

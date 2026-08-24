@@ -1,0 +1,11 @@
+{
+  "name": "@financeapp/sync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SQLCipher read model, mutation outbox, conflict resolver, and sync engine for FinanceApp.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
