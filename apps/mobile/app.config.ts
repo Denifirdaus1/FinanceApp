@@ -16,6 +16,9 @@ const BASE_CONFIG: ExpoConfig = {
   plugins: ['expo-router'],
   ios: {
     supportsTablet: true,
+    config: {
+      usesNonExemptEncryption: false,
+    },
   },
 };
 

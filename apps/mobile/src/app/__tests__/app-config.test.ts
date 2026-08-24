@@ -106,6 +106,7 @@ describe('app config environment boundary', () => {
       projectId: 'de64cde1-0152-4944-9f4d-0350b2b3bdf0',
     });
     expect(config.ios?.usesAppleSignIn).toBe(true);
+    expect(config.ios?.config?.usesNonExemptEncryption).toBe(false);
     expect(config.plugins).toContain('expo-apple-authentication');
   });
 
