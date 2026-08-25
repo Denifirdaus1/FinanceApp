@@ -111,6 +111,22 @@ describe('app config environment boundary', () => {
     expect(config.plugins).toContain('expo-apple-authentication');
   });
 
+  it('enables SQLCipher and secure key storage through native config plugins', () => {
+    setEnv(DEV_ENV);
+    const config = appConfig();
+    expect(config.plugins).toContainEqual([
+      'expo-sqlite',
+      { enableFTS: false, useSQLCipher: true },
+    ]);
+    expect(config.plugins).toContainEqual([
+      'expo-secure-store',
+      {
+        configureAndroidBackup: true,
+        faceIDPermission: 'Izinkan FinanceApp memakai Face ID untuk membuka data keuangan.',
+      },
+    ]);
+  });
+
   it('binds preview and production OTA updates to the native fingerprint', () => {
     setEnv({
       EXPO_PUBLIC_APP_ENV: 'preview',
