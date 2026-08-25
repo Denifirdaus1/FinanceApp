@@ -59,7 +59,7 @@ function initialState({
       return {
         step: 'callback',
         provider: callback.provider,
-        callbackUrl: `financeapp://auth/callback?provider=${callback.provider}&state=fixture-success`,
+        callbackUrl: `financeapp-dev://auth/callback?provider=${callback.provider}&state=fixture-success`,
       };
     }
     return { step: 'error', provider: 'google', retry: 'sign-in', code: 'malformed-callback' };
@@ -196,7 +196,7 @@ export function AuthBootstrapWireframe({
     setState({ step: 'welcome', skipped: false });
   };
 
-  const content = useMemo(() => {
+  const content = (() => {
     switch (state.step) {
       case 'welcome':
         return (
@@ -443,7 +443,7 @@ export function AuthBootstrapWireframe({
           </StatusState>
         );
     }
-  }, [accountInput, accountError, fixture, reducedMotion, state, tokens]);
+  })();
   return (
     <ScrollView
       testID="auth-bootstrap-scroll"

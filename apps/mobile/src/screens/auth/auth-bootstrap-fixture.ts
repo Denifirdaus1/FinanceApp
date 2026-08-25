@@ -12,6 +12,8 @@ export const AUTH_PROVIDER_LABELS: Record<AuthProvider, string> = {
   apple: 'Apple',
 };
 
+const AUTH_CALLBACK_SCHEMES = ['financeapp-dev:', 'financeapp:'] as const;
+
 export type AuthFixtureOutcome =
   'success' | 'cancelled' | 'provider-error' | 'offline' | 'malformed-callback';
 
@@ -110,7 +112,7 @@ function consumeOutcome<T extends string>(
 }
 
 export function createFixtureCallbackUrl(provider: AuthProvider): string {
-  return `financeapp://auth/callback?provider=${provider}&state=fixture-success`;
+  return `financeapp-dev://auth/callback?provider=${provider}&state=fixture-success`;
 }
 
 export function parseAuthCallback(value: string): AuthCallbackResult {
@@ -124,7 +126,7 @@ export function parseAuthCallback(value: string): AuthCallbackResult {
     const provider = parsed.searchParams.get('provider');
     const state = parsed.searchParams.get('state');
     if (
-      parsed.protocol !== 'financeapp:' ||
+      !AUTH_CALLBACK_SCHEMES.includes(parsed.protocol as (typeof AUTH_CALLBACK_SCHEMES)[number]) ||
       parsed.hostname !== 'auth' ||
       parsed.pathname !== '/callback' ||
       parsed.hash ||
@@ -196,7 +198,7 @@ export function createAuthFixture(scenario: AuthFixtureScenario = {}): AuthFixtu
           return {
             kind: 'callback',
             provider,
-            callbackUrl: `financeapp://auth/callback?provider=${provider}&state=fixture-invalid`,
+            callbackUrl: `financeapp-dev://auth/callback?provider=${provider}&state=fixture-invalid`,
           };
         case 'success':
         default:

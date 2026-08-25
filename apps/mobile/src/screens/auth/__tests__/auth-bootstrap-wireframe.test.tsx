@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { renderRouter, screen as routerScreen } from 'expo-router/testing-library';
 
+import { defaultSessionAdapter } from '../../../app/session/fake-session-adapter';
 import { ROUTE_MANIFEST } from '../../../navigation/route-manifest';
 import { ThemeProvider } from '../../../app/providers/theme-provider';
 import {
@@ -135,7 +137,7 @@ describe('F01 auth and account bootstrap wireframe', () => {
 
   it('parses only the allowlisted fixture callback and rejects malformed or sensitive URLs', () => {
     expect(
-      parseAuthCallback('financeapp://auth/callback?provider=google&state=fixture-success'),
+      parseAuthCallback('financeapp-dev://auth/callback?provider=google&state=fixture-success'),
     ).toEqual({
       kind: 'accepted',
       provider: 'google',
@@ -146,10 +148,12 @@ describe('F01 auth and account bootstrap wireframe', () => {
       kind: 'rejected',
       code: 'malformed-callback',
     });
-    expect(parseAuthCallback('financeapp://auth/callback?provider=google&code=secret')).toEqual({
-      kind: 'rejected',
-      code: 'malformed-callback',
-    });
+    expect(parseAuthCallback('financeapp-dev://auth/callback?provider=google&code=secret')).toEqual(
+      {
+        kind: 'rejected',
+        code: 'malformed-callback',
+      },
+    );
   });
 
   it('does not call Supabase Auth or production network while running fixture interactions', async () => {
@@ -176,5 +180,23 @@ describe('F01 auth and account bootstrap wireframe', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Lewati pengenalan' }));
     await waitFor(() => expect(screen.getByText('Masuk ke FinanceApp')).toBeTruthy());
     expect(screen.getByRole('button', { name: 'Lanjutkan dengan Google' })).toBeTruthy();
+  });
+
+  it('mounts the U01 onboarding route inside the existing public guard', async () => {
+    defaultSessionAdapter.setSignedOut();
+    renderRouter('app', { initialUrl: '/onboarding' });
+
+    expect(await routerScreen.findByText('Selamat datang di FinanceApp')).toBeTruthy();
+    expect(routerScreen.queryByText('Beranda')).toBeNull();
+  });
+
+  it('mounts the callback route without exposing callback query values', async () => {
+    defaultSessionAdapter.setSignedOut();
+    renderRouter('app', {
+      initialUrl: '/auth/callback?provider=google&state=fixture-success',
+    });
+
+    expect(await routerScreen.findByText('Callback OAuth (fixture)')).toBeTruthy();
+    expect(routerScreen.queryByText('fixture-success')).toBeNull();
   });
 });
