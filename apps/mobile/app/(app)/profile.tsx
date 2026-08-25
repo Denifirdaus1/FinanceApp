@@ -26,9 +26,14 @@ export default function ProfileScreen() {
         Navigation foundation siap untuk ruang profil dan kontrol akun.
       </Text>
       <Button
+        label="Open financial profile"
+        onPress={() => router.push('/profile/preferences')}
+        style={{ marginTop: tokens.spacing.space6, alignSelf: 'flex-start' }}
+      />
+      <Button
         label="Open screen catalog"
         onPress={() => router.push('/screen-catalog')}
-        style={{ marginTop: tokens.spacing.space6, alignSelf: 'flex-start' }}
+        style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}
         variant="secondary"
       />
     </View>

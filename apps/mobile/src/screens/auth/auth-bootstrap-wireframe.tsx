@@ -41,6 +41,7 @@ export interface AuthBootstrapWireframeProps {
   fixture?: AuthFixture;
   initialCallbackUrl?: string;
   initialCallbackParams?: AuthCallbackParams;
+  onFinancialProfile?: () => void;
 }
 
 function initialState({
@@ -98,6 +99,7 @@ export function AuthBootstrapWireframe({
   fixture: fixtureProp,
   initialCallbackUrl,
   initialCallbackParams,
+  onFinancialProfile,
 }: AuthBootstrapWireframeProps) {
   const { tokens, reducedMotion } = useTheme();
   const fixture = useMemo(() => fixtureProp ?? createAuthFixture(), [fixtureProp]);
@@ -393,6 +395,11 @@ export function AuthBootstrapWireframe({
             reducedMotion={reducedMotion}
           >
             <Button label="Ulangi alur fixture" onPress={reset} />
+            <Button
+              label="Buka profil keuangan fixture"
+              onPress={onFinancialProfile ?? reset}
+              variant="secondary"
+            />
           </StatusState>
         );
       case 'cancelled':

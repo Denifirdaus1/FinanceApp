@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { renderRouter, screen as routerScreen } from 'expo-router/testing-library';
 
 import { ThemeProvider } from '../../../app/providers/theme-provider';
@@ -130,11 +130,13 @@ describe('U03 F02 financial profile and preferences wireframe', () => {
     renderFinancialProfile();
     await goToCurrencyStep();
     fireEvent.changeText(screen.getByLabelText('Awal bulan finansial (wajib)'), '29');
-    await goToPrivacyStep();
+    fireEvent.press(screen.getByRole('button', { name: 'Lanjut ke privasi' }));
+    expect(await screen.findByText('Privasi & preferensi')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Simpan preferensi fixture' }));
     expect(await screen.findByText('Awal bulan finansial harus 1–28')).toBeTruthy();
 
     fireEvent.changeText(screen.getByLabelText('Awal bulan finansial (wajib)'), '28');
+    fireEvent.press(screen.getByRole('button', { name: 'Lanjut ke privasi' }));
     fireEvent.press(screen.getByRole('button', { name: 'Simpan preferensi fixture' }));
     expect(await screen.findByText('Preferensi tersinkron (fixture)')).toBeTruthy();
   });
@@ -149,13 +151,22 @@ describe('U03 F02 financial profile and preferences wireframe', () => {
     expect(maskAmounts.props.accessibilityState.checked).toBe(false);
     fireEvent.press(analytics);
     fireEvent.press(maskAmounts);
-    expect(screen.getByRole('switch', { name: 'Analytics anonim fixture' }).props.accessibilityState.checked).toBe(false);
-    expect(screen.getByRole('switch', { name: 'Sembunyikan nominal lokal' }).props.accessibilityState.checked).toBe(true);
+    expect(
+      screen.getByRole('switch', { name: 'Analytics anonim fixture' }).props.accessibilityState
+        .checked,
+    ).toBe(false);
+    expect(
+      screen.getByRole('switch', { name: 'Sembunyikan nominal lokal' }).props.accessibilityState
+        .checked,
+    ).toBe(true);
 
     fireEvent.press(screen.getByRole('button', { name: 'Simpan preferensi fixture' }));
     expect(await screen.findByText('Preferensi tersinkron (fixture)')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Edit preferensi lagi' }));
-    expect(screen.getByRole('switch', { name: 'Analytics anonim fixture' }).props.accessibilityState.checked).toBe(false);
+    expect(
+      screen.getByRole('switch', { name: 'Analytics anonim fixture' }).props.accessibilityState
+        .checked,
+    ).toBe(false);
   });
 
   it('models offline save as sync pending and recovers with retry', async () => {
@@ -217,12 +228,14 @@ describe('U03 F02 financial profile and preferences wireframe', () => {
 
     defaultSessionAdapter.setSignedIn();
     renderRouter('app', { initialUrl: '/profile' });
-    expect(await routerScreen.findByText('Profile')).toBeTruthy();
+    expect(
+      await routerScreen.findByRole('button', { name: 'Open financial profile' }),
+    ).toBeTruthy();
     fireEvent.press(routerScreen.getByRole('button', { name: 'Open financial profile' }));
     expect(await routerScreen.findByText('Lokasi & waktu')).toBeTruthy();
   });
 
-  it('provides U02 completion and Profile back navigation callbacks', async () => {
+  it('provides the U02 completion callback into the financial profile flow', async () => {
     const onFinancialProfile = jest.fn();
     render(
       <ThemeProvider>
@@ -238,8 +251,9 @@ describe('U03 F02 financial profile and preferences wireframe', () => {
     expect(await screen.findByText('Wireframe akun selesai')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Buka profil keuangan fixture' }));
     expect(onFinancialProfile).toHaveBeenCalledTimes(1);
+  });
 
-    cleanup();
+  it('provides Profile back navigation from the financial profile flow', async () => {
     const onBack = jest.fn();
     renderFinancialProfile(undefined, { onBack });
     expect(await screen.findByText('Lokasi & waktu')).toBeTruthy();
@@ -252,7 +266,9 @@ describe('U03 F02 financial profile and preferences wireframe', () => {
     expect(await screen.findByText('Lokasi & waktu')).toBeTruthy();
     expect(screen.getByTestId('financial-profile-scroll')).toBeTruthy();
     expect(screen.getByTestId('financial-profile-reduced-motion-indicator')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'Indonesia (id-ID)' }).props.accessibilityState.checked).toBe(true);
+    expect(
+      screen.getByRole('radio', { name: 'Indonesia (id-ID)' }).props.accessibilityState.checked,
+    ).toBe(true);
     expect(FINANCIAL_PROFILE_LAYOUT.minimumWidth).toBe(320);
     expect(FINANCIAL_PROFILE_LAYOUT.minimumTouchTarget).toBeGreaterThanOrEqual(48);
     expect(FINANCIAL_PROFILE_LAYOUT.contentMaxWidth).toBeGreaterThanOrEqual(320);

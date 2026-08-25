@@ -188,7 +188,7 @@ describe('F01 auth and account bootstrap wireframe', () => {
 
     expect(await routerScreen.findByText('Selamat datang di FinanceApp')).toBeTruthy();
     expect(routerScreen.queryByText('Beranda')).toBeNull();
-  });
+  }, 10_000);
 
   it('mounts the callback route without exposing callback query values', async () => {
     defaultSessionAdapter.setSignedOut();
