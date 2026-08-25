@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@financeapp/config": "workspace:*",
+    "@financeapp/ui": "workspace:*",
     "@financeapp/sync": "workspace:*",
     "@tanstack/react-query": "^5.102.2",
     "expo": "~56.0.20",
