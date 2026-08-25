@@ -1,4 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+
+import { Button } from '@financeapp/ui';
 
 import { useTheme } from '../providers/theme-provider';
 
@@ -7,24 +9,31 @@ export interface ErrorScreenProps {
 }
 
 export function ErrorScreen({ onRetry }: ErrorScreenProps) {
-  const { colors } = useTheme();
+  const { tokens } = useTheme();
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.canvas }]}
+      style={[
+        styles.container,
+        { backgroundColor: tokens.colors.canvas, padding: tokens.spacing.space6 },
+      ]}
       accessibilityLiveRegion="polite"
     >
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Terjadi kesalahan</Text>
-      <Text style={[styles.message, { color: colors.textSecondary }]}>
+      <Text
+        accessibilityRole="header"
+        style={[tokens.typography.heading2, styles.title, { color: tokens.colors.textPrimary }]}
+      >
+        Terjadi kesalahan
+      </Text>
+      <Text
+        style={[
+          tokens.typography.bodyLarge,
+          styles.message,
+          { color: tokens.colors.textSecondary, marginTop: tokens.spacing.space2 },
+        ]}
+      >
         Data Anda tetap aman di perangkat.
       </Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Coba lagi"
-        onPress={onRetry}
-        style={[styles.button, { backgroundColor: colors.primary }]}
-      >
-        <Text style={[styles.buttonLabel, { color: colors.onPrimary }]}>Coba lagi</Text>
-      </Pressable>
+      <Button label="Coba lagi" onPress={onRetry} style={{ marginTop: tokens.spacing.space6 }} />
     </View>
   );
 }
@@ -34,28 +43,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
     textAlign: 'center',
   },
   message: {
-    fontSize: 16,
-    marginTop: 8,
     textAlign: 'center',
-  },
-  button: {
-    marginTop: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  buttonLabel: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

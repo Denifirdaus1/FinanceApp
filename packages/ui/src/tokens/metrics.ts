@@ -34,6 +34,30 @@ export const interaction = {
   compactButtonHeight: 48,
   minimumAdjacentTargetGap: 8,
   focusOffset: 2,
+  pressedOpacity: 0.82,
+  pressedReducedOpacity: 0.88,
+  disabledOpacity: 0.58,
+  skeletonBaseOpacity: 0.65,
+  skeletonLowOpacity: 0.35,
+} as const;
+
+export const componentMetrics = {
+  fieldLabelGap: 6,
+  supportingTextGap: 6,
+  buttonContentGap: 8,
+  cardContentGap: 12,
+  iconContainer: 40,
+  rowMinHeight: 68,
+  chartMinHeight: 160,
+  chartSummaryMaxWidth: 680,
+  dialogMaxWidth: 520,
+  emptyMessageMaxWidth: 420,
+  errorMessageMaxWidth: 680,
+  toastMessageMinWidth: 160,
+  toastDuration: 5000,
+  bannerMessageMinWidth: 180,
+  sheetMaxHeight: '90%',
+  skeletonDefaultHeight: 16,
 } as const;
 
 export const icon = {

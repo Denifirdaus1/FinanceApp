@@ -8,7 +8,11 @@ export { Input, type InputProps } from './input';
 export { ListRow, type ListRowProps } from './list-row';
 export { MoneyInput, type MoneyInputProps } from './money-input';
 export { OfflineBanner, type OfflineBannerProps } from './offline-banner';
-export { PermissionState, type PermissionStateProps, type PermissionStatus } from './permission-state';
+export {
+  PermissionState,
+  type PermissionStateProps,
+  type PermissionStatus,
+} from './permission-state';
 export { Select, type SelectOption, type SelectProps } from './select';
 export { SensitiveValue, type SensitiveValueProps } from './sensitive-value';
 export { Sheet, type SheetProps } from './sheet';

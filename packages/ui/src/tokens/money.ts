@@ -28,10 +28,12 @@ export function getCurrencyFractionDigits(currency: string, locale = 'id-ID'): n
     return 0;
   }
   try {
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: normalized,
-    }).resolvedOptions().maximumFractionDigits ?? 0;
+    return (
+      new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: normalized,
+      }).resolvedOptions().maximumFractionDigits ?? 0
+    );
   } catch {
     return 0;
   }
@@ -134,9 +136,7 @@ export function parseMoneyInput(
   const lastDot = trimmed.lastIndexOf('.');
   const separatorIndex = Math.max(lastComma, lastDot);
   const hasDecimalSeparator = separatorIndex >= 0 && /\d/.test(trimmed.slice(separatorIndex + 1));
-  const fraction = hasDecimalSeparator
-    ? trimmed.slice(separatorIndex + 1).replace(/\D/g, '')
-    : '';
+  const fraction = hasDecimalSeparator ? trimmed.slice(separatorIndex + 1).replace(/\D/g, '') : '';
   if (fraction.length > fractionDigits) {
     return null;
   }

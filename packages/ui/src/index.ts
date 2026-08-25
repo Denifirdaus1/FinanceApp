@@ -1,6 +1,7 @@
 export const uiPackageName = '@financeapp/ui' as const;
 
 export {
+  componentMetrics,
   darkChartTokens,
   darkColors,
   darkElevation,

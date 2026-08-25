@@ -65,7 +65,9 @@ function CatalogContent(): React.JSX.Element {
       <Text style={[tokens.typography.heading1, { color: tokens.colors.textPrimary }]}>
         Warm pastel primitives
       </Text>
-      <Text style={[tokens.typography.body, styles.description, { color: tokens.colors.textSecondary }]}>
+      <Text
+        style={[tokens.typography.body, styles.description, { color: tokens.colors.textSecondary }]}
+      >
         Fixture deterministik untuk review state, accessibility, privacy, dan responsif.
       </Text>
 
@@ -91,7 +93,9 @@ function CatalogContent(): React.JSX.Element {
 
       <Section title="Surfaces and rows">
         <Card accessibilityLabel="Saldo utama" onPress={() => undefined}>
-          <Text style={[tokens.typography.title, { color: tokens.colors.textPrimary }]}>Saldo utama</Text>
+          <Text style={[tokens.typography.title, { color: tokens.colors.textPrimary }]}>
+            Saldo utama
+          </Text>
           <SensitiveValue value="Rp125.000" hidden />
         </Card>
         <ListRow
@@ -182,7 +186,9 @@ function Section({ title, children }: { title: string; children: ReactNode }): R
   const { tokens } = useTheme();
   return (
     <View style={styles.section}>
-      <Text style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}>{title}</Text>
+      <Text style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}>
+        {title}
+      </Text>
       <View style={styles.sectionContent}>{children}</View>
     </View>
   );
@@ -196,8 +202,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     letterSpacing: 1,
   },
-  description: {
-  },
+  description: {},
   section: {
     gap: 12,
   },

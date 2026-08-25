@@ -1,19 +1,26 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { StyleSheet, Text } from 'react-native';
+import { Modal, StyleSheet, Text } from 'react-native';
 import type { ReactElement } from 'react';
 
 import {
   Button,
   Card,
   ChartFrame,
+  darkTheme,
   Dialog,
   EmptyState,
   ErrorState,
+  formatAmountInput,
+  formatMoney,
   Input,
+  interaction,
+  lightTheme,
   ListRow,
   MoneyInput,
   OfflineBanner,
   PermissionState,
+  parseMoneyInput,
+  ResourceState,
   Select,
   SensitiveValue,
   Sheet,
@@ -43,9 +50,32 @@ function MotionProbe(): React.JSX.Element {
 }
 
 describe('U00 component contracts', () => {
+  it('keeps light/dark semantic values, tabular money, motion, and touch metrics stable', () => {
+    expect(lightTheme.colors.canvas).not.toBe(darkTheme.colors.canvas);
+    expect(lightTheme.colors.chart.plum).not.toBe(darkTheme.colors.chart.plum);
+    expect(lightTheme.typography.amountRow.fontVariant).toContain('tabular-nums');
+    expect(lightTheme.motion.fast.duration).toBe(180);
+    expect(lightTheme.motion.slow.duration).toBe(360);
+    expect(interaction.minimumTouchTarget).toBe(48);
+    expect(lightTheme.componentMetrics.rowMinHeight).toBe(68);
+  });
+
+  it('formats and parses IDR and fractional currencies without floating point values', () => {
+    expect(formatAmountInput(125000n)).toBe('125.000');
+    expect(formatMoney(125000n)).toBe('Rp125.000');
+    expect(formatMoney(-125000n)).toBe('-Rp125.000');
+    expect(formatMoney(125000n, 'IDR', 'id-ID', true)).toBe('+Rp125.000');
+    expect(parseMoneyInput('Rp 125.000')).toBe(125000n);
+    expect(parseMoneyInput('')).toBeNull();
+    expect(parseMoneyInput('-Rp 125.000')).toBeNull();
+    expect(parseMoneyInput('-Rp 125.000', 'IDR', 'id-ID', true)).toBe(-125000n);
+    expect(parseMoneyInput('1,25', 'USD', 'id-ID')).toBe(125n);
+    expect(formatMoney(125n, 'USD', 'en-US')).toBe('$1.25');
+  });
+
   it('exposes the light/dark semantic theme and reduced-motion override', () => {
     renderWithTheme(<MotionProbe />, true);
-    expect(screen.getByText('light:reduced:#FFF9F0')).toBeTruthy();
+    expect(screen.getByText(`light:reduced:${lightTheme.colors.canvas}`)).toBeTruthy();
   });
 
   it('renders accessible form controls and emits typed amount values', () => {
@@ -97,6 +127,12 @@ describe('U00 component contracts', () => {
 
     const loadingButton = screen.getByRole('button', { name: 'Simpan' });
     expect(loadingButton.props.accessibilityState).toMatchObject({ busy: true, disabled: true });
+    const buttonStyle = loadingButton.props.style;
+    const loadingButtonStyle =
+      typeof buttonStyle === 'function' ? buttonStyle({ pressed: false }) : buttonStyle;
+    expect(StyleSheet.flatten(loadingButtonStyle).minHeight).toBeGreaterThanOrEqual(
+      interaction.minimumTouchTarget,
+    );
     expect(screen.getByRole('button', { name: 'Hapus' }).props.accessibilityState).toMatchObject({
       disabled: true,
     });
@@ -108,11 +144,7 @@ describe('U00 component contracts', () => {
 
   it('redacts sensitive values from visible and accessibility output', () => {
     renderWithTheme(
-      <SensitiveValue
-        value="Rp125.000"
-        hidden
-        accessibilityLabel="Nominal disembunyikan"
-      />,
+      <SensitiveValue value="Rp125.000" hidden accessibilityLabel="Nominal disembunyikan" />,
     );
 
     expect(screen.getByText('••••')).toBeTruthy();
@@ -187,6 +219,27 @@ describe('U00 component contracts', () => {
     expect(onDialogConfirm).toHaveBeenCalled();
   });
 
+  it('disables sheet animation when reduced motion is enabled', () => {
+    renderWithTheme(
+      <Sheet visible title="Pilihan" onClose={jest.fn()}>
+        <Text>Isi sheet</Text>
+      </Sheet>,
+      true,
+    );
+
+    expect(screen.UNSAFE_getByType(Modal).props.animationType).toBe('none');
+  });
+
+  it('dismisses a toast using the five-second semantic duration', () => {
+    jest.useFakeTimers();
+    const onDismiss = jest.fn();
+    renderWithTheme(<Toast visible message="Selesai" onDismiss={onDismiss} />);
+
+    jest.advanceTimersByTime(lightTheme.componentMetrics.toastDuration);
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
+  });
+
   it('renders empty, permission, error, and chart alternatives', () => {
     renderWithTheme(
       <>
@@ -225,5 +278,32 @@ describe('U00 component contracts', () => {
     expect(screen.getByText('Izinkan kamera')).toBeTruthy();
     expect(screen.getByText('Data tabel arus kas')).toBeTruthy();
     expect(screen.getByText('Pengeluaran lebih tinggi dari Juli.')).toBeTruthy();
+  });
+
+  it('does not expose chart data table content while privacy mode is active', () => {
+    renderWithTheme(
+      <ChartFrame
+        title="Saldo"
+        summary="Saldo periode berjalan."
+        privacyHidden
+        dataTable={<Text>Nominal tabel rahasia</Text>}
+      >
+        <Text>Chart rahasia</Text>
+      </ChartFrame>,
+    );
+
+    expect(screen.getAllByText('Nominal disembunyikan.').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText('Nominal tabel rahasia')).toBeNull();
+    expect(screen.queryByText('Chart rahasia')).toBeNull();
+  });
+
+  it('composes deterministic loading, empty, offline, and error resource states', () => {
+    renderWithTheme(
+      <ResourceState status="offline">
+        <Text>Ready</Text>
+      </ResourceState>,
+    );
+    expect(screen.getByText('Offline—perubahan disimpan di perangkat.')).toBeTruthy();
+    expect(screen.queryByText('Ready')).toBeNull();
   });
 });

@@ -14,8 +14,10 @@ import { useReducedMotion, useTheme } from './theme-provider';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'destructive' | 'icon';
 
-export interface ButtonProps
-  extends Omit<PressableProps, 'accessibilityLabel' | 'accessibilityState' | 'children' | 'disabled' | 'onPress' | 'style'> {
+export interface ButtonProps extends Omit<
+  PressableProps,
+  'accessibilityLabel' | 'accessibilityState' | 'children' | 'disabled' | 'onPress' | 'style'
+> {
   label: string;
   variant?: ButtonVariant;
   loading?: boolean;
@@ -54,7 +56,11 @@ export function Button({
     },
     tertiary: { backgroundColor: 'transparent', borderColor: 'transparent' },
     destructive: { backgroundColor: tokens.colors.danger, borderColor: tokens.colors.danger },
-    icon: { backgroundColor: 'transparent', borderColor: 'transparent', paddingHorizontal: 0 },
+    icon: {
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      paddingHorizontal: tokens.spacing.space0,
+    },
   }[variant];
   const contentColor =
     variant === 'primary' || variant === 'destructive'
@@ -71,28 +77,60 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        variant === 'icon' && styles.iconButton,
+        {
+          borderRadius: tokens.radius.md,
+          borderWidth: tokens.stroke.hairline,
+          minHeight:
+            variant === 'icon'
+              ? tokens.interaction.minimumTouchTarget
+              : tokens.interaction.buttonHeight,
+          minWidth: tokens.interaction.minimumTouchTarget,
+          paddingHorizontal: variant === 'icon' ? tokens.spacing.space0 : tokens.spacing.space4,
+        },
+        variant === 'icon' && {
+          height: tokens.interaction.minimumTouchTarget,
+          width: tokens.interaction.minimumTouchTarget,
+        },
         variantStyle,
-        pressed && !isDisabled && (reducedMotion ? styles.pressedReduced : styles.pressed),
-        isDisabled && styles.disabled,
+        pressed &&
+          !isDisabled && {
+            opacity: reducedMotion
+              ? tokens.interaction.pressedReducedOpacity
+              : tokens.interaction.pressedOpacity,
+          },
+        isDisabled && { opacity: tokens.interaction.disabledOpacity },
         style,
       ]}
     >
-      <View style={styles.content}>
+      <View
+        style={[
+          styles.content,
+          {
+            gap: tokens.componentMetrics.buttonContentGap,
+            minHeight: tokens.interaction.compactButtonHeight,
+          },
+        ]}
+      >
         {loading ? (
           <ActivityIndicator
             accessible={false}
             color={contentColor}
             size="small"
-            style={styles.spinner}
+            style={{ marginRight: tokens.spacing.space1 }}
           />
         ) : (
           leadingIcon
         )}
-        {children ?? (
+        {loading ? (
           <Text style={[tokens.typography.label, { color: contentColor }]}>
-            {loading && loadingLabel ? loadingLabel : label}
+            {loadingLabel ?? label}
           </Text>
+        ) : variant === 'icon' ? (
+          children
+        ) : (
+          (children ?? (
+            <Text style={[tokens.typography.label, { color: contentColor }]}>{label}</Text>
+          ))
         )}
         {!loading && trailingIcon}
       </View>
@@ -103,36 +141,11 @@ export function Button({
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 52,
-    minWidth: 48,
-    paddingHorizontal: 16,
-  },
-  iconButton: {
-    height: 48,
-    minHeight: 48,
-    paddingHorizontal: 0,
-    width: 48,
   },
   content: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
     justifyContent: 'center',
-    minHeight: 44,
-  },
-  spinner: {
-    marginRight: 2,
-  },
-  pressed: {
-    opacity: 0.82,
-  },
-  pressedReduced: {
-    opacity: 0.88,
-  },
-  disabled: {
-    opacity: 0.58,
   },
 });

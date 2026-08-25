@@ -53,27 +53,55 @@ export function Dialog({
       transparent
       visible
     >
-      <View style={styles.modalRoot}>
-        <Pressable accessibilityElementsHidden accessible={false} onPress={onCancel} style={[styles.scrim, { backgroundColor: tokens.colors.scrim }]} />
+      <View style={[styles.modalRoot, { padding: tokens.spacing.space5 }]}>
+        <Pressable
+          accessibilityElementsHidden
+          accessible={false}
+          onPress={onCancel}
+          style={[styles.scrim, { backgroundColor: tokens.colors.scrim }]}
+        />
         <View
-          accessibilityRole="alert"
           style={[
             styles.dialog,
             {
               backgroundColor: tokens.colors.surfaceRaised,
               borderColor: tokens.colors.borderStrong,
               borderRadius: tokens.radius.lg,
+              gap: tokens.spacing.space3,
+              maxWidth: tokens.componentMetrics.dialogMaxWidth,
+              padding: tokens.spacing.space5,
             },
             tokens.elevation.level3,
             style,
           ]}
           testID={testID}
         >
-          <Text style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}>{title}</Text>
-          <Text style={[tokens.typography.body, styles.message, { color: tokens.colors.textSecondary }]}>
+          <Text
+            accessibilityRole="header"
+            style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}
+          >
+            {title}
+          </Text>
+          <Text
+            accessibilityLiveRegion="assertive"
+            accessibilityRole="alert"
+            style={[
+              tokens.typography.body,
+              styles.message,
+              { color: tokens.colors.textSecondary, marginTop: tokens.spacing.space1 },
+            ]}
+          >
             {message}
           </Text>
-          <View style={styles.actions}>
+          <View
+            style={[
+              styles.actions,
+              {
+                gap: tokens.interaction.minimumAdjacentTargetGap,
+                marginTop: tokens.spacing.space1,
+              },
+            ]}
+          >
             <Button label={cancelLabel} onPress={onCancel} variant="tertiary" />
             <Button
               label={confirmLabel}
@@ -93,7 +121,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
   },
   scrim: {
     bottom: 0,
@@ -103,20 +130,13 @@ const styles = StyleSheet.create({
     top: 0,
   },
   dialog: {
-    gap: 12,
-    maxWidth: 520,
-    padding: 20,
     width: '100%',
   },
-  message: {
-    marginTop: 4,
-  },
+  message: {},
   actions: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
     justifyContent: 'flex-end',
-    marginTop: 4,
   },
 });

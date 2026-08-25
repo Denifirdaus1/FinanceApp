@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 
-import { EmptyState } from '../components/empty-state';
 import { ErrorState } from '../components/error-state';
 import { OfflineBanner } from '../components/offline-banner';
 import { Skeleton } from '../components/skeleton';
@@ -19,21 +18,11 @@ export interface ResourceStateProps {
 export function ResourceState({
   status,
   children,
-  loading = <Skeleton height={96} />,
-  empty = (
-    <EmptyState
-      actionLabel="Tambah data"
-      message="Belum ada data untuk ditampilkan."
-      onAction={() => undefined}
-      title="Belum ada data"
-    />
-  ),
+  loading = <Skeleton />,
+  empty = null,
   offline = <OfflineBanner />,
   error = (
-    <ErrorState
-      message="Data lokal tetap aman. Coba lagi."
-      title="Tidak dapat memuat data"
-    />
+    <ErrorState message="Data lokal tetap aman. Coba lagi." title="Tidak dapat memuat data" />
   ),
 }: ResourceStateProps) {
   if (status === 'loading') {

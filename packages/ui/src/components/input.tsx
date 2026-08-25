@@ -12,8 +12,10 @@ import { useState, type ReactNode } from 'react';
 
 import { useTheme } from './theme-provider';
 
-export interface InputProps
-  extends Omit<TextInputProps, 'accessibilityLabel' | 'accessibilityState' | 'editable' | 'onChangeText' | 'style' | 'value'> {
+export interface InputProps extends Omit<
+  TextInputProps,
+  'accessibilityLabel' | 'accessibilityState' | 'editable' | 'onChangeText' | 'style' | 'value'
+> {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
@@ -51,7 +53,9 @@ export function Input({
   const [focused, setFocused] = useState(false);
   const labelText = required ? `${label} (wajib)` : label;
   const inputLabel = accessibilityLabel ?? labelText;
-  const describedHint = error ? `${accessibilityHint ? `${accessibilityHint}. ` : ''}${error}` : accessibilityHint;
+  const describedHint = error
+    ? `${accessibilityHint ? `${accessibilityHint}. ` : ''}${error}`
+    : accessibilityHint;
   const borderColor = error
     ? tokens.colors.danger
     : focused
@@ -60,7 +64,12 @@ export function Input({
 
   return (
     <View style={containerStyle}>
-      <Text style={[tokens.typography.label, styles.label, { color: tokens.colors.textPrimary }]}>
+      <Text
+        style={[
+          tokens.typography.label,
+          { color: tokens.colors.textPrimary, marginBottom: tokens.componentMetrics.fieldLabelGap },
+        ]}
+      >
         {labelText}
       </Text>
       <View
@@ -69,9 +78,12 @@ export function Input({
           {
             backgroundColor: tokens.colors.surface,
             borderColor,
+            borderRadius: tokens.radius.md,
             borderWidth: focused || error ? tokens.stroke.focus : tokens.stroke.control,
+            minHeight: tokens.interaction.buttonHeight,
+            paddingHorizontal: tokens.spacing.space4,
           },
-          disabled && styles.disabled,
+          disabled && { opacity: tokens.interaction.disabledOpacity },
         ]}
       >
         {leading}
@@ -91,14 +103,31 @@ export function Input({
             onFocus?.(event);
           }}
           placeholderTextColor={placeholderTextColor ?? tokens.colors.textMuted}
-          style={[tokens.typography.bodyLarge, styles.input, { color: tokens.colors.textPrimary }, inputStyle]}
+          style={[
+            tokens.typography.bodyLarge,
+            styles.input,
+            {
+              color: tokens.colors.textPrimary,
+              minHeight: tokens.interaction.minimumTouchTarget,
+              paddingVertical: tokens.spacing.space2,
+            },
+            inputStyle,
+          ]}
           underlineColorAndroid="transparent"
           value={value}
         />
         {trailing}
       </View>
       {hint && !error ? (
-        <Text style={[tokens.typography.caption, styles.supporting, { color: tokens.colors.textSecondary }]}>
+        <Text
+          style={[
+            tokens.typography.caption,
+            {
+              color: tokens.colors.textSecondary,
+              marginTop: tokens.componentMetrics.supportingTextGap,
+            },
+          ]}
+        >
           {hint}
         </Text>
       ) : null}
@@ -106,7 +135,10 @@ export function Input({
         <Text
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
-          style={[tokens.typography.body, styles.supporting, { color: tokens.colors.danger }]}
+          style={[
+            tokens.typography.body,
+            { color: tokens.colors.danger, marginTop: tokens.componentMetrics.supportingTextGap },
+          ]}
         >
           {error}
         </Text>
@@ -116,26 +148,12 @@ export function Input({
 }
 
 const styles = StyleSheet.create({
-  label: {
-    marginBottom: 6,
-  },
   inputShell: {
     alignItems: 'center',
-    borderRadius: 12,
     flexDirection: 'row',
-    minHeight: 52,
-    paddingHorizontal: 16,
   },
   input: {
     flex: 1,
-    minHeight: 48,
     paddingHorizontal: 0,
-    paddingVertical: 10,
-  },
-  supporting: {
-    marginTop: 6,
-  },
-  disabled: {
-    opacity: 0.58,
   },
 });

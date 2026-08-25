@@ -50,28 +50,58 @@ export function Sheet({
       visible
     >
       <View style={styles.modalRoot}>
-        <Pressable accessibilityElementsHidden accessible={false} onPress={onClose} style={[styles.scrim, { backgroundColor: tokens.colors.scrim }]} />
+        <Pressable
+          accessibilityElementsHidden
+          accessible={false}
+          onPress={onClose}
+          style={[styles.scrim, { backgroundColor: tokens.colors.scrim }]}
+        />
         <View
           accessibilityViewIsModal
           style={[
-            styles.sheet,
             {
               backgroundColor: tokens.colors.surface,
               borderColor: tokens.colors.borderSubtle,
               borderTopLeftRadius: tokens.radius.xl,
               borderTopRightRadius: tokens.radius.xl,
+              borderTopWidth: tokens.stroke.hairline,
+              maxHeight: tokens.componentMetrics.sheetMaxHeight,
               paddingBottom: tokens.spacing.space4 + safeAreaBottomInset,
+              paddingHorizontal: tokens.spacing.space5,
+              paddingTop: tokens.spacing.space3,
             },
             tokens.elevation.level3,
             style,
           ]}
           testID={testID}
         >
-          <View style={styles.header}>
-            <Text style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}>{title}</Text>
+          <View
+            style={[
+              styles.header,
+              {
+                gap: tokens.componentMetrics.cardContentGap,
+                minHeight: tokens.interaction.buttonHeight,
+              },
+            ]}
+          >
+            <Text
+              accessibilityRole="header"
+              style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}
+            >
+              {title}
+            </Text>
             <Button label={closeLabel} onPress={onClose} variant="tertiary" />
           </View>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={[
+              {
+                gap: tokens.spacing.space4,
+                paddingBottom: tokens.spacing.space4,
+                paddingTop: tokens.spacing.space2,
+              },
+            ]}
+            keyboardShouldPersistTaps="handled"
+          >
             {children}
           </ScrollView>
         </View>
@@ -92,22 +122,9 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
   },
-  sheet: {
-    borderTopWidth: 1,
-    maxHeight: '90%',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-  },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
     justifyContent: 'space-between',
-    minHeight: 52,
-  },
-  content: {
-    gap: 16,
-    paddingBottom: 16,
-    paddingTop: 8,
   },
 });

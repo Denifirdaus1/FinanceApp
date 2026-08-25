@@ -1,10 +1,4 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Button } from './button';
 import { useTheme } from './theme-provider';
@@ -34,20 +28,34 @@ export function OfflineBanner({
 
   return (
     <View
-      accessibilityLiveRegion="polite"
-      accessibilityRole="alert"
       style={[
         styles.container,
         {
           backgroundColor: tokens.colors.primaryContainer,
           borderColor: tokens.colors.borderStrong,
           borderRadius: tokens.radius.sm,
+          borderWidth: tokens.stroke.hairline,
+          gap: tokens.interaction.minimumAdjacentTargetGap,
+          minHeight: tokens.interaction.minimumTouchTarget,
+          paddingHorizontal: tokens.spacing.space3,
+          paddingVertical: tokens.spacing.space2,
         },
         style,
       ]}
       testID={testID}
     >
-      <Text style={[tokens.typography.body, styles.message, { color: tokens.colors.onPrimaryContainer }]}>
+      <Text
+        accessibilityLiveRegion="polite"
+        accessibilityRole="alert"
+        style={[
+          tokens.typography.body,
+          styles.message,
+          {
+            color: tokens.colors.onPrimaryContainer,
+            minWidth: tokens.componentMetrics.bannerMessageMinWidth,
+          },
+        ]}
+      >
         {message}
       </Text>
       {onRetry ? <Button label={retryLabel} onPress={onRetry} variant="tertiary" /> : null}
@@ -58,16 +66,11 @@ export function OfflineBanner({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    borderWidth: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    minHeight: 48,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
   message: {
     flex: 1,
-    minWidth: 180,
+    minWidth: 0,
   },
 });

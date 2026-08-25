@@ -1,13 +1,14 @@
 import {
   ThemeProvider as UiThemeProvider,
   useTheme as useUiTheme,
+  type ThemeContextValue as UiThemeContextValue,
   type ThemeProviderProps as UiThemeProviderProps,
   type ThemeColors,
 } from '@financeapp/ui';
 
 export type { ThemeColors } from '@financeapp/ui';
 
-export interface ThemeContextValue {
+export interface ThemeContextValue extends UiThemeContextValue {
   colors: ThemeColors;
 }
 
@@ -23,5 +24,5 @@ export function ThemeProvider({ children, scheme, reducedMotion }: ThemeProvider
 
 export function useTheme(): ThemeContextValue {
   const theme = useUiTheme();
-  return { colors: theme.tokens.colors };
+  return { ...theme, colors: theme.tokens.colors };
 }

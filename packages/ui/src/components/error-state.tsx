@@ -1,10 +1,4 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Button } from './button';
 import { useTheme } from './theme-provider';
@@ -30,35 +24,39 @@ export function ErrorState({
 
   return (
     <View
-      accessibilityLiveRegion="assertive"
-      accessibilityRole="alert"
       style={[
-        styles.container,
         {
           backgroundColor: tokens.colors.surface,
           borderColor: tokens.colors.danger,
           borderRadius: tokens.radius.lg,
+          borderWidth: tokens.stroke.hairline,
+          gap: tokens.spacing.space3,
+          padding: tokens.spacing.space4,
         },
         style,
       ]}
       testID={testID}
     >
-      <Text style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}>{title}</Text>
-      <Text style={[tokens.typography.body, styles.message, { color: tokens.colors.textSecondary }]}>
+      <Text
+        accessibilityRole="header"
+        style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}
+      >
+        {title}
+      </Text>
+      <Text
+        accessibilityLiveRegion="assertive"
+        accessibilityRole="alert"
+        style={[
+          tokens.typography.body,
+          {
+            color: tokens.colors.textSecondary,
+            maxWidth: tokens.componentMetrics.errorMessageMaxWidth,
+          },
+        ]}
+      >
         {message}
       </Text>
       {onRetry ? <Button label={retryLabel} onPress={onRetry} variant="secondary" /> : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    borderWidth: 1,
-    gap: 12,
-    padding: 16,
-  },
-  message: {
-    maxWidth: 640,
-  },
-});

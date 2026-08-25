@@ -3,11 +3,24 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../src/app/providers/theme-provider';
 
 export default function PublicLandingScreen() {
-  const { colors } = useTheme();
+  const { tokens } = useTheme();
   return (
-    <View style={[styles.container, { backgroundColor: colors.canvas }]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>FinanceApp</Text>
-      <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: tokens.colors.canvas, padding: tokens.spacing.space6 },
+      ]}
+    >
+      <Text style={[tokens.typography.heading1, { color: tokens.colors.textPrimary }]}>
+        FinanceApp
+      </Text>
+      <Text
+        style={[
+          tokens.typography.bodyLarge,
+          styles.tagline,
+          { color: tokens.colors.textSecondary, marginTop: tokens.spacing.space3 },
+        ]}
+      >
         Catat cepat, pahami uangmu, rencanakan dengan tenang.
       </Text>
     </View>
@@ -19,15 +32,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
   },
   tagline: {
-    fontSize: 16,
-    marginTop: 12,
     textAlign: 'center',
   },
 });

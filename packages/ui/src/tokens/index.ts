@@ -7,6 +7,7 @@ export {
 } from './colors';
 export { darkChartTokens, lightChartTokens, type ChartTokens } from './chart';
 export {
+  componentMetrics,
   darkElevation,
   icon,
   interaction,

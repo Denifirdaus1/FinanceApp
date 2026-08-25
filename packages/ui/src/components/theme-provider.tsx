@@ -22,7 +22,10 @@ function usePlatformReducedMotion(): boolean {
 
   useEffect(() => {
     let mounted = true;
-    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReducedMotion);
+    const subscription = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReducedMotion,
+    );
     AccessibilityInfo.isReduceMotionEnabled()
       .then((enabled) => {
         if (mounted) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Animated,
   StyleSheet,
@@ -21,7 +21,7 @@ export interface SkeletonProps {
 
 export function Skeleton({
   width = '100%',
-  height = 16,
+  height,
   borderRadius,
   animate = true,
   style,
@@ -29,38 +29,39 @@ export function Skeleton({
 }: SkeletonProps) {
   const { tokens } = useTheme();
   const reducedMotion = useReducedMotion();
-  const opacity = useRef(new Animated.Value(0.65)).current;
+  const [opacity] = useState(() => new Animated.Value(tokens.interaction.skeletonBaseOpacity));
+  const resolvedHeight = height ?? tokens.componentMetrics.skeletonDefaultHeight;
 
   useEffect(() => {
     if (!animate || reducedMotion) {
       opacity.stopAnimation();
-      opacity.setValue(1);
+      opacity.setValue(tokens.interaction.skeletonBaseOpacity);
       return undefined;
     }
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
           duration: tokens.motion.slow.duration,
-          toValue: 0.35,
+          toValue: tokens.interaction.skeletonLowOpacity,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           duration: tokens.motion.slow.duration,
-          toValue: 0.65,
+          toValue: tokens.interaction.skeletonBaseOpacity,
           useNativeDriver: true,
         }),
       ]),
     );
     animation.start();
     return () => animation.stop();
-  }, [animate, opacity, reducedMotion, tokens.motion.slow.duration]);
+  }, [animate, opacity, reducedMotion, tokens.interaction, tokens.motion.slow.duration]);
 
   const skeletonStyle = [
     styles.skeleton,
     {
       backgroundColor: tokens.colors.skeleton,
       borderRadius: borderRadius ?? tokens.radius.sm,
-      height,
+      height: resolvedHeight,
       width,
     },
     style,

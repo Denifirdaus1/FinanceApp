@@ -19,6 +19,7 @@ export interface CardProps {
   elevation?: 'level0' | 'level1' | 'level2' | 'level3';
   padding?: SpacingName;
   onPress?: PressableProps['onPress'];
+  disabled?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string;
   style?: StyleProp<ViewStyle>;
@@ -31,6 +32,7 @@ export function Card({
   elevation = 'level1',
   padding = 'space4',
   onPress,
+  disabled = false,
   accessibilityLabel,
   accessibilityHint,
   style,
@@ -48,14 +50,20 @@ export function Card({
       backgroundColor,
       borderColor: tokens.colors.borderSubtle,
       borderRadius: tokens.radius.lg,
+      borderWidth: tokens.stroke.hairline,
       padding: tokens.spacing[padding],
     },
     tokens.elevation[elevation],
+    disabled && { opacity: tokens.interaction.disabledOpacity },
     style,
   ];
 
   if (!onPress) {
-    return <View style={cardStyle} testID={testID}>{children}</View>;
+    return (
+      <View style={cardStyle} testID={testID}>
+        {children}
+      </View>
+    );
   }
 
   return (
@@ -63,8 +71,13 @@ export function Card({
       accessibilityHint={accessibilityHint}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [cardStyle, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        cardStyle,
+        pressed && !disabled && { opacity: tokens.interaction.pressedOpacity },
+      ]}
       testID={testID}
     >
       {children}
@@ -74,10 +87,6 @@ export function Card({
 
 const styles = StyleSheet.create({
   card: {
-    borderWidth: 1,
     minWidth: 0,
-  },
-  pressed: {
-    opacity: 0.88,
   },
 });

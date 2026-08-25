@@ -1,16 +1,13 @@
 import { Text, type TextInputProps } from 'react-native';
-import { useEffect, useState } from 'react';
 
-import {
-  formatAmountInput,
-  getCurrencyFractionDigits,
-  parseMoneyInput,
-} from '../tokens';
+import { formatAmountInput, getCurrencyFractionDigits, parseMoneyInput } from '../tokens';
 import { Input, type InputProps } from './input';
 import { useTheme } from './theme-provider';
 
-export interface MoneyInputProps
-  extends Omit<InputProps, 'keyboardType' | 'leading' | 'onChangeText' | 'value'> {
+export interface MoneyInputProps extends Omit<
+  InputProps,
+  'keyboardType' | 'leading' | 'onChangeText' | 'value'
+> {
   valueMinor: bigint | null;
   onChangeMinor: (value: bigint | null) => void;
   currency?: string;
@@ -33,13 +30,7 @@ export function MoneyInput({
 }: MoneyInputProps) {
   const { tokens } = useTheme();
   const resolvedMinorUnit = minorUnit ?? getCurrencyFractionDigits(currency, locale);
-  const [inputValue, setInputValue] = useState(() =>
-    formatAmountInput(valueMinor, currency, locale, resolvedMinorUnit),
-  );
-
-  useEffect(() => {
-    setInputValue(formatAmountInput(valueMinor, currency, locale, resolvedMinorUnit));
-  }, [currency, locale, resolvedMinorUnit, valueMinor]);
+  const inputValue = formatAmountInput(valueMinor, currency, locale, resolvedMinorUnit);
 
   return (
     <Input
@@ -51,23 +42,9 @@ export function MoneyInput({
           {currency}
         </Text>
       }
-      onBlur={(event) => {
-        setInputValue(formatAmountInput(valueMinor, currency, locale, resolvedMinorUnit));
-        onBlur?.(event);
-      }}
+      onBlur={onBlur}
       onChangeText={(text) => {
-        const parsed = parseMoneyInput(
-          text,
-          currency,
-          locale,
-          allowNegative,
-          resolvedMinorUnit,
-        );
-        setInputValue(
-          parsed === null && text.trim().length > 0
-            ? text
-            : formatAmountInput(parsed, currency, locale, resolvedMinorUnit),
-        );
+        const parsed = parseMoneyInput(text, currency, locale, allowNegative, resolvedMinorUnit);
         onChangeMinor(parsed);
       }}
       value={inputValue}

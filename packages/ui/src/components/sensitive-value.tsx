@@ -1,8 +1,4 @@
-import {
-  Text,
-  type StyleProp,
-  type TextStyle,
-} from 'react-native';
+import { Text, type StyleProp, type TextStyle } from 'react-native';
 
 import { useTheme } from './theme-provider';
 
@@ -25,7 +21,9 @@ export function SensitiveValue({
 }: SensitiveValueProps) {
   const { tokens } = useTheme();
   const displayedValue = hidden ? hiddenValue : value;
-  const label = hidden ? accessibilityLabel ?? 'Nominal disembunyikan' : accessibilityLabel ?? value;
+  const label = hidden
+    ? (accessibilityLabel ?? 'Nominal disembunyikan')
+    : (accessibilityLabel ?? value);
 
   return (
     <Text

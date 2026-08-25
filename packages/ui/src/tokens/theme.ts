@@ -2,6 +2,7 @@ import type { ChartTokens } from './chart';
 import { darkChartTokens, lightChartTokens } from './chart';
 import { darkColors, lightColors, type ThemeColors } from './colors';
 import {
+  componentMetrics,
   darkElevation,
   icon,
   interaction,
@@ -25,6 +26,7 @@ export interface ThemeTokens {
   radius: typeof radius;
   stroke: typeof stroke;
   interaction: typeof interaction;
+  componentMetrics: typeof componentMetrics;
   icon: typeof icon;
   motion: typeof motion;
   elevation: Record<ElevationLevel, ElevationStyle>;
@@ -39,6 +41,7 @@ export const lightTheme = {
   radius,
   stroke,
   interaction,
+  componentMetrics,
   icon,
   motion,
   elevation: lightElevation,
@@ -53,6 +56,7 @@ export const darkTheme = {
   radius,
   stroke,
   interaction,
+  componentMetrics,
   icon,
   motion,
   elevation: darkElevation,

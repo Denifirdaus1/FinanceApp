@@ -1,11 +1,5 @@
 import { useEffect } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
 
 import { Button } from './button';
@@ -32,21 +26,22 @@ export function Toast({
   actionLabel,
   onAction,
   onDismiss,
-  duration = 5000,
+  duration,
   variant = 'neutral',
   style,
   testID,
   children,
 }: ToastProps) {
   const { tokens } = useTheme();
+  const resolvedDuration = duration ?? tokens.componentMetrics.toastDuration;
 
   useEffect(() => {
-    if (!visible || duration <= 0) {
+    if (!visible || resolvedDuration <= 0) {
       return undefined;
     }
-    const timeout = setTimeout(onDismiss, duration);
+    const timeout = setTimeout(onDismiss, resolvedDuration);
     return () => clearTimeout(timeout);
-  }, [duration, onDismiss, visible]);
+  }, [onDismiss, resolvedDuration, visible]);
 
   if (!visible) {
     return null;
@@ -61,20 +56,35 @@ export function Toast({
 
   return (
     <View
-      accessibilityLiveRegion="polite"
-      accessibilityRole="alert"
       style={[
         styles.toast,
         {
           backgroundColor: tokens.colors.surfaceRaised,
           borderColor: statusColor,
+          borderRadius: tokens.radius.md,
+          borderWidth: tokens.stroke.hairline,
+          gap: tokens.interaction.minimumAdjacentTargetGap,
+          minHeight: tokens.interaction.buttonHeight,
+          paddingHorizontal: tokens.spacing.space4,
+          paddingVertical: tokens.spacing.space1,
         },
         tokens.elevation.level2,
         style,
       ]}
       testID={testID}
     >
-      <Text style={[tokens.typography.body, styles.message, { color: tokens.colors.textPrimary }]}>
+      <Text
+        accessibilityLiveRegion="polite"
+        accessibilityRole="alert"
+        style={[
+          tokens.typography.body,
+          styles.message,
+          {
+            color: tokens.colors.textPrimary,
+            minWidth: tokens.componentMetrics.toastMessageMinWidth,
+          },
+        ]}
+      >
         {message}
       </Text>
       {children}
@@ -95,17 +105,10 @@ export function Toast({
 const styles = StyleSheet.create({
   toast: {
     alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    minHeight: 52,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
   },
   message: {
     flex: 1,
-    minWidth: 160,
   },
 });

@@ -1,11 +1,4 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useMemo, useState, type ReactNode } from 'react';
 
 import { Button } from './button';
@@ -70,7 +63,12 @@ export function Select<Value extends string>({
 
   return (
     <View style={style}>
-      <Text style={[tokens.typography.label, styles.label, { color: tokens.colors.textPrimary }]}>
+      <Text
+        style={[
+          tokens.typography.label,
+          { color: tokens.colors.textPrimary, marginBottom: tokens.componentMetrics.fieldLabelGap },
+        ]}
+      >
         {label}
       </Text>
       <Pressable
@@ -86,9 +84,14 @@ export function Select<Value extends string>({
           {
             backgroundColor: tokens.colors.surface,
             borderColor: error ? tokens.colors.danger : tokens.colors.borderStrong,
+            borderRadius: tokens.radius.md,
+            borderWidth: tokens.stroke.control,
+            gap: tokens.componentMetrics.cardContentGap,
+            minHeight: tokens.interaction.buttonHeight,
+            paddingHorizontal: tokens.spacing.space4,
           },
-          pressed && !disabled && styles.pressed,
-          disabled && styles.disabled,
+          pressed && !disabled && { opacity: tokens.interaction.pressedOpacity },
+          disabled && { opacity: tokens.interaction.disabledOpacity },
         ]}
         testID={testID}
       >
@@ -100,12 +103,23 @@ export function Select<Value extends string>({
         >
           {selectedLabel}
         </Text>
-        <Text accessibilityElementsHidden style={[tokens.typography.label, { color: tokens.colors.primary }]}>
+        <Text
+          accessibilityElementsHidden
+          style={[tokens.typography.label, { color: tokens.colors.primary }]}
+        >
           v
         </Text>
       </Pressable>
       {hint && !error ? (
-        <Text style={[tokens.typography.caption, styles.supporting, { color: tokens.colors.textSecondary }]}>
+        <Text
+          style={[
+            tokens.typography.caption,
+            {
+              color: tokens.colors.textSecondary,
+              marginTop: tokens.componentMetrics.supportingTextGap,
+            },
+          ]}
+        >
           {hint}
         </Text>
       ) : null}
@@ -113,7 +127,10 @@ export function Select<Value extends string>({
         <Text
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
-          style={[tokens.typography.body, styles.supporting, { color: tokens.colors.danger }]}
+          style={[
+            tokens.typography.body,
+            { color: tokens.colors.danger, marginTop: tokens.componentMetrics.supportingTextGap },
+          ]}
         >
           {error}
         </Text>
@@ -142,28 +159,40 @@ export function Select<Value extends string>({
                   close();
                 }}
                 style={({ pressed }) => [
-                  styles.option,
                   {
-                    backgroundColor: selected ? tokens.colors.primaryContainer : tokens.colors.surface,
+                    backgroundColor: selected
+                      ? tokens.colors.primaryContainer
+                      : tokens.colors.surface,
                     borderColor: selected ? tokens.colors.primary : tokens.colors.borderSubtle,
+                    borderRadius: tokens.radius.md,
+                    borderWidth: tokens.stroke.hairline,
+                    minHeight: tokens.interaction.buttonHeight,
+                    paddingHorizontal: tokens.spacing.space4,
+                    paddingVertical: tokens.spacing.space2,
                   },
-                  pressed && styles.pressed,
+                  pressed && { opacity: tokens.interaction.pressedOpacity },
                 ]}
               >
                 {renderOption ? (
                   renderOption(option, selected)
                 ) : (
-                  <View style={styles.optionContent}>
-                    <Text style={[tokens.typography.bodyLarge, { color: tokens.colors.textPrimary }]}>
+                  <View style={[styles.optionContent, { gap: tokens.spacing.space1 }]}>
+                    <Text
+                      style={[tokens.typography.bodyLarge, { color: tokens.colors.textPrimary }]}
+                    >
                       {option.label}
                     </Text>
                     {option.description ? (
-                      <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>
+                      <Text
+                        style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}
+                      >
                         {option.description}
                       </Text>
                     ) : null}
                     {selected ? (
-                      <Text style={[tokens.typography.label, { color: tokens.colors.primary }]}>Dipilih</Text>
+                      <Text style={[tokens.typography.label, { color: tokens.colors.primary }]}>
+                        Dipilih
+                      </Text>
                     ) : null}
                   </View>
                 )}
@@ -172,7 +201,9 @@ export function Select<Value extends string>({
           })
         ) : (
           <View accessible accessibilityRole="text">
-            <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>Tidak ada hasil.</Text>
+            <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
+              Tidak ada hasil.
+            </Text>
           </View>
         )}
         <Button label="Batal" onPress={close} variant="tertiary" />
@@ -182,37 +213,12 @@ export function Select<Value extends string>({
 }
 
 const styles = StyleSheet.create({
-  label: {
-    marginBottom: 6,
-  },
   trigger: {
     alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1.5,
     flexDirection: 'row',
-    gap: 12,
     justifyContent: 'space-between',
-    minHeight: 52,
-    paddingHorizontal: 16,
-  },
-  option: {
-    borderRadius: 12,
-    borderWidth: 1,
-    minHeight: 52,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
   },
   optionContent: {
     flex: 1,
-    gap: 4,
-  },
-  supporting: {
-    marginTop: 6,
-  },
-  pressed: {
-    opacity: 0.86,
-  },
-  disabled: {
-    opacity: 0.58,
   },
 });

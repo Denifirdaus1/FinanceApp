@@ -41,14 +41,21 @@ export function ListRow({
   testID,
 }: ListRowProps) {
   const { tokens } = useTheme();
-  const label = accessibilityLabel ?? [title, subtitle, valueAccessibilityLabel ?? value].filter(Boolean).join(', ');
+  const label =
+    accessibilityLabel ??
+    [title, subtitle, valueAccessibilityLabel ?? value].filter(Boolean).join(', ');
   const rowStyle = [
     styles.row,
     {
-      borderBottomColor: tokens.colors.borderSubtle,
       backgroundColor: tokens.colors.surface,
+      borderBottomColor: tokens.colors.borderSubtle,
+      borderBottomWidth: tokens.stroke.hairline,
+      gap: tokens.componentMetrics.cardContentGap,
+      minHeight: tokens.componentMetrics.rowMinHeight,
+      paddingHorizontal: tokens.spacing.space4,
+      paddingVertical: tokens.spacing.space2,
     },
-    disabled && styles.disabled,
+    disabled && { opacity: tokens.interaction.disabledOpacity },
     style,
   ];
 
@@ -58,20 +65,39 @@ export function ListRow({
       accessibilityLabel={label}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityState={{ disabled }}
-      disabled={disabled || !onPress}
+      disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [rowStyle, pressed && !disabled && styles.pressed]}
+      style={({ pressed }) => [
+        rowStyle,
+        pressed && !disabled && { opacity: tokens.interaction.pressedOpacity },
+      ]}
       testID={testID}
     >
-      {leading ? <View style={styles.leading}>{leading}</View> : null}
+      {leading ? (
+        <View
+          style={[
+            styles.leading,
+            {
+              height: tokens.componentMetrics.iconContainer,
+              width: tokens.componentMetrics.iconContainer,
+            },
+          ]}
+        >
+          {leading}
+        </View>
+      ) : null}
       <View style={styles.body}>
         <Text style={[tokens.typography.title, { color: tokens.colors.textPrimary }]}>{title}</Text>
         {subtitle ? (
-          <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>{subtitle}</Text>
+          <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>
+            {subtitle}
+          </Text>
         ) : null}
       </View>
       {value ? (
-        <Text style={[tokens.typography.amountRow, styles.value, { color: tokens.colors.textPrimary }]}>
+        <Text
+          style={[tokens.typography.amountRow, styles.value, { color: tokens.colors.textPrimary }]}
+        >
           {value}
         </Text>
       ) : null}
@@ -83,18 +109,11 @@ export function ListRow({
 const styles = StyleSheet.create({
   row: {
     alignItems: 'center',
-    borderBottomWidth: 1,
     flexDirection: 'row',
-    gap: 12,
-    minHeight: 68,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
   },
   leading: {
     alignItems: 'center',
-    height: 40,
     justifyContent: 'center',
-    width: 40,
   },
   body: {
     flex: 1,
@@ -103,11 +122,5 @@ const styles = StyleSheet.create({
   value: {
     flexShrink: 0,
     textAlign: 'right',
-  },
-  pressed: {
-    opacity: 0.88,
-  },
-  disabled: {
-    opacity: 0.58,
   },
 });

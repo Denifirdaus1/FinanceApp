@@ -1,10 +1,4 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
 
 import { Button } from './button';
@@ -36,12 +30,37 @@ export function EmptyState({
   const { tokens } = useTheme();
 
   return (
-    <View accessible accessibilityRole="summary" style={[styles.container, style]} testID={testID}>
-      {illustration ? <View style={styles.illustration}>{illustration}</View> : null}
-      <Text accessibilityRole="header" style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          gap: tokens.componentMetrics.cardContentGap,
+          paddingHorizontal: tokens.spacing.space5,
+          paddingVertical: tokens.spacing.space10,
+        },
+        style,
+      ]}
+      testID={testID}
+    >
+      {illustration ? (
+        <View style={{ marginBottom: tokens.spacing.space1 }}>{illustration}</View>
+      ) : null}
+      <Text
+        accessibilityRole="header"
+        style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}
+      >
         {title}
       </Text>
-      <Text style={[tokens.typography.body, styles.message, { color: tokens.colors.textSecondary }]}>
+      <Text
+        style={[
+          tokens.typography.body,
+          styles.message,
+          {
+            color: tokens.colors.textSecondary,
+            maxWidth: tokens.componentMetrics.emptyMessageMaxWidth,
+          },
+        ]}
+      >
         {message}
       </Text>
       <Button label={actionLabel} onPress={onAction} />
@@ -55,16 +74,9 @@ export function EmptyState({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    gap: 12,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 40,
-  },
-  illustration: {
-    marginBottom: 4,
   },
   message: {
-    maxWidth: 420,
     textAlign: 'center',
   },
 });

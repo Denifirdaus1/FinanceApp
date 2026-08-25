@@ -1,5 +1,9 @@
 import { Component, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+
+import { Button, useTheme as useUiTheme } from '@financeapp/ui';
+
+import { ThemeProvider } from '../providers/theme-provider';
 
 export interface GlobalErrorBoundaryProps {
   children: ReactNode;
@@ -11,17 +15,38 @@ interface GlobalErrorBoundaryState {
 
 function BoundaryFallback({ onRetry }: { onRetry: () => void }) {
   return (
-    <View style={styles.container} accessibilityLiveRegion="polite">
-      <Text style={styles.title}>Terjadi kesalahan</Text>
-      <Text style={styles.message}>Data Anda tetap aman di perangkat.</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Coba lagi"
-        onPress={onRetry}
-        style={styles.button}
+    <ThemeProvider>
+      <BoundaryFallbackContent onRetry={onRetry} />
+    </ThemeProvider>
+  );
+}
+
+function BoundaryFallbackContent({ onRetry }: { onRetry: () => void }) {
+  const { tokens } = useUiTheme();
+  return (
+    <View
+      accessibilityLiveRegion="polite"
+      style={[
+        styles.container,
+        { backgroundColor: tokens.colors.canvas, padding: tokens.spacing.space6 },
+      ]}
+    >
+      <Text
+        accessibilityRole="header"
+        style={[tokens.typography.heading2, styles.title, { color: tokens.colors.textPrimary }]}
       >
-        <Text style={styles.buttonLabel}>Coba lagi</Text>
-      </Pressable>
+        Terjadi kesalahan
+      </Text>
+      <Text
+        style={[
+          tokens.typography.bodyLarge,
+          styles.message,
+          { color: tokens.colors.textSecondary, marginTop: tokens.spacing.space2 },
+        ]}
+      >
+        Data Anda tetap aman di perangkat.
+      </Text>
+      <Button label="Coba lagi" onPress={onRetry} style={{ marginTop: tokens.spacing.space6 }} />
     </View>
   );
 }
@@ -55,33 +80,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#FFF9F0',
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
     textAlign: 'center',
-    color: '#2F241C',
   },
   message: {
-    fontSize: 16,
-    marginTop: 8,
     textAlign: 'center',
-    color: '#67584A',
-  },
-  button: {
-    marginTop: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minHeight: 48,
-    justifyContent: 'center',
-    backgroundColor: '#7A5C3E',
-  },
-  buttonLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFDF8',
   },
 });
