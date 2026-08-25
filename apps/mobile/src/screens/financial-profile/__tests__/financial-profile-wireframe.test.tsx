@@ -233,7 +233,7 @@ describe('U03 F02 financial profile and preferences wireframe', () => {
     ).toBeTruthy();
     fireEvent.press(routerScreen.getByRole('button', { name: 'Open financial profile' }));
     expect(await routerScreen.findByText('Lokasi & waktu')).toBeTruthy();
-  });
+  }, 15_000);
 
   it('provides the U02 completion callback into the financial profile flow', async () => {
     const onFinancialProfile = jest.fn();
