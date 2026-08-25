@@ -50,13 +50,22 @@ describe('per-install database key lifecycle', () => {
     expect(harness.database.delete).not.toHaveBeenCalled();
   });
 
+  it('rotates a stale iOS Keychain value when the app database no longer exists', async () => {
+    const harness = createHarness({ key: 'b'.repeat(64), databaseExists: false });
+    await expect(harness.lifecycle.acquire()).resolves.toEqual({
+      key: 'a'.repeat(64),
+      disposition: 'created',
+    });
+    expect(harness.calls).toEqual(['key:delete', 'key:write']);
+  });
+
   it('purges an unreadable database before replacing a lost key', async () => {
     const harness = createHarness({ key: null, databaseExists: true });
     await expect(harness.lifecycle.acquire()).resolves.toEqual({
       key: 'a'.repeat(64),
       disposition: 'recovered_key_loss',
     });
-    expect(harness.calls).toEqual(['db:close', 'db:delete', 'key:write']);
+    expect(harness.calls).toEqual(['db:close', 'db:delete', 'key:delete', 'key:write']);
   });
 
   it.each(['logout', 'account_deleted'] as const)(

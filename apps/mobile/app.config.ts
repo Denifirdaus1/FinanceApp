@@ -69,7 +69,18 @@ export default (): ExpoConfig => {
       fallbackToCacheTimeout: 0,
       url: otaUpdatesEnabled ? `https://u.expo.dev/${EAS_PROJECT_ID}` : undefined,
     },
-    plugins: [...(base.plugins ?? []), 'expo-apple-authentication'],
+    plugins: [
+      ...(base.plugins ?? []),
+      'expo-apple-authentication',
+      ['expo-sqlite', { enableFTS: false, useSQLCipher: true }],
+      [
+        'expo-secure-store',
+        {
+          configureAndroidBackup: true,
+          faceIDPermission: 'Izinkan FinanceApp memakai Face ID untuk membuka data keuangan.',
+        },
+      ],
+    ],
     ios: {
       ...base.ios,
       bundleIdentifier: variant.applicationId,

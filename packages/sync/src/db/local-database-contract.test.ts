@@ -82,4 +82,14 @@ describe('local database contracts', () => {
       }),
     ).toThrow('scope id');
   });
+
+  it('rejects a purge directive without a UTC timestamp', () => {
+    expect(() =>
+      createPurgeDirective({
+        reason: 'logout',
+        scope: { type: 'database', id: 'local' },
+        requestedAt: '25 August 2026',
+      }),
+    ).toThrow('requestedAt');
+  });
 });

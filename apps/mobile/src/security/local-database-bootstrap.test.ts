@@ -68,6 +68,18 @@ describe('local database bootstrap recovery', () => {
     expect(harness.driver.open).not.toHaveBeenCalled();
   });
 
+  it('purges private local state for a signed-out session', async () => {
+    const harness = createHarness();
+    const bootstrap = new LocalDatabaseBootstrap(harness.lifecycle, harness.driver);
+    await expect(bootstrap.boot({ sessionStatus: 'signedOut', offline: false })).resolves.toEqual({
+      status: 'purged',
+      offline: false,
+      recovery: 'logout',
+    });
+    expect(harness.file.delete).toHaveBeenCalledTimes(1);
+    expect(harness.vault.delete).toHaveBeenCalledTimes(1);
+  });
+
   it('reports key-loss recovery after replacing the unreadable local database', async () => {
     const harness = createHarness();
     await harness.vault.delete();
@@ -115,5 +127,14 @@ describe('local database bootstrap recovery', () => {
     const result = bootstrap.boot({ sessionStatus: 'signedIn', offline: false });
     await expect(result).rejects.toBeInstanceOf(LocalDatabaseUnavailableError);
     await expect(result).rejects.not.toThrow('sensitive detail');
+  });
+
+  it('hides SecureStore failures behind the generic fail-closed error', async () => {
+    const harness = createHarness();
+    harness.vault.read.mockRejectedValue(new Error('native keychain path and detail'));
+    const bootstrap = new LocalDatabaseBootstrap(harness.lifecycle, harness.driver);
+    const result = bootstrap.boot({ sessionStatus: 'signedIn', offline: false });
+    await expect(result).rejects.toBeInstanceOf(LocalDatabaseUnavailableError);
+    await expect(result).rejects.not.toThrow('keychain');
   });
 });

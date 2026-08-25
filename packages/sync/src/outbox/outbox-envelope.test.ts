@@ -1,8 +1,23 @@
-import { createOutboxEnvelope } from './outbox-envelope';
+import { createOutboxEnvelope, type JsonValue } from './outbox-envelope';
 
 const FIXED_OPERATION_ID = '11111111-1111-4111-8111-111111111111';
 
 describe('outbox envelope', () => {
+  const createMinimal = (overrides: Record<string, unknown> = {}) =>
+    createOutboxEnvelope(
+      {
+        scope: { type: 'user', id: 'user-1' },
+        entity: { type: 'transaction', id: 'entry-1', version: 1 },
+        command: 'transaction.upsert',
+        payload: {},
+        ...overrides,
+      },
+      {
+        createOperationId: () => FIXED_OPERATION_ID,
+        now: () => '2026-08-25T10:00:00.000Z',
+      },
+    );
+
   it('creates a deterministic versioned envelope and idempotency key', () => {
     const envelope = createOutboxEnvelope(
       {
@@ -89,5 +104,99 @@ describe('outbox envelope', () => {
         },
       ),
     ).toThrow('version');
+  });
+
+  it('rejects unsafe identifiers, commands, and operation IDs', () => {
+    expect(() => createMinimal({ scope: { type: 'user', id: 'user:other' } })).toThrow('scope id');
+    expect(() => createMinimal({ command: 'DROP TABLE outbox' })).toThrow('command');
+    expect(() =>
+      createOutboxEnvelope(
+        {
+          scope: { type: 'user', id: 'user-1' },
+          entity: { type: 'transaction', id: 'entry-1', version: 1 },
+          command: 'transaction.upsert',
+          payload: {},
+        },
+        { createOperationId: () => 'predictable-id', now: () => '2026-08-25T10:00:00.000Z' },
+      ),
+    ).toThrow('operation id');
+  });
+
+  it('rejects a purge directive whose authorization scope does not match', () => {
+    expect(() =>
+      createMinimal({
+        purge: {
+          directiveVersion: 1,
+          reason: 'access_revoked',
+          scope: { type: 'household', id: 'household-1' },
+          requestedAt: '2026-08-25T10:00:00.000Z',
+        },
+      }),
+    ).toThrow('purge scope');
+  });
+
+  it('clones and freezes a valid purge directive at the envelope boundary', () => {
+    const purge = {
+      directiveVersion: 1 as const,
+      reason: 'logout' as const,
+      scope: { type: 'user' as const, id: 'user-1' },
+      requestedAt: '2026-08-25T10:00:00.000Z',
+    };
+    const envelope = createMinimal({ purge });
+    purge.scope.id = 'changed-after-validation';
+    expect(envelope.purge?.scope.id).toBe('user-1');
+    expect(Object.isFrozen(envelope.purge)).toBe(true);
+    expect(Object.isFrozen(envelope.purge?.scope)).toBe(true);
+  });
+
+  it('rejects malformed purge directives and tombstone command mismatches', () => {
+    expect(() =>
+      createMinimal({
+        purge: {
+          directiveVersion: 2,
+          reason: 'logout',
+          scope: { type: 'user', id: 'user-1' },
+          requestedAt: '2026-08-25T10:00:00.000Z',
+        },
+      }),
+    ).toThrow('purge directive');
+    expect(() =>
+      createMinimal({
+        tombstone: { deletedAt: '2026-08-25T10:00:00.000Z' },
+        command: 'transaction.upsert',
+      }),
+    ).toThrow('tombstone');
+  });
+
+  it('rejects non-JSON-safe payload values', () => {
+    const invalidPayloads: unknown[] = [
+      { value: undefined },
+      { value: Number.POSITIVE_INFINITY },
+      new Date('2026-08-25T10:00:00.000Z'),
+      { constructor: 'polluted' },
+    ];
+    for (const payload of invalidPayloads) {
+      expect(() => createMinimal({ payload })).toThrow('payload');
+    }
+  });
+
+  it('rejects cyclic payloads', () => {
+    const payload: Record<string, unknown> = {};
+    payload.self = payload;
+    expect(() => createMinimal({ payload })).toThrow('cycles');
+  });
+
+  it('deep-freezes JSON arrays and rejects invalid timestamps', () => {
+    const envelope = createMinimal({ payload: { values: ['one', { nested: true }] } });
+    const payload = envelope.payload as { values: JsonValue[] };
+    expect(Object.isFrozen(payload)).toBe(true);
+    expect(Object.isFrozen(payload.values)).toBe(true);
+    expect(Object.isFrozen(payload.values[1])).toBe(true);
+    expect(() =>
+      createMinimal({
+        command: 'transaction.delete',
+        tombstone: { deletedAt: 'not-a-timestamp' },
+      }),
+    ).toThrow('deletedAt');
   });
 });

@@ -23,6 +23,7 @@ describe('analytics policy', () => {
     ['receiptImageBase64', 'raw-image'],
     ['transcript', 'beli makan dua puluh ribu'],
     ['audioUri', 'file:///voice.m4a'],
+    ['account_number', '1234567890'],
   ])('prohibits financial or raw capture property %s', (key, value) => {
     expect(() =>
       createAnalyticsEvent('app_boot_completed', {
@@ -58,5 +59,12 @@ describe('analytics policy', () => {
       },
     });
     expect(input.nested.token).toBe('secret-token');
+  });
+
+  it('redacts unknown free-form diagnostic strings by default', () => {
+    expect(redactDiagnosticContext({ route: 'activity', message: 'gaji saya 10 juta' })).toEqual({
+      route: 'activity',
+      message: '[REDACTED]',
+    });
   });
 });
