@@ -44,26 +44,29 @@ describe('F01 auth and account bootstrap wireframe', () => {
     expect(screen.getByRole('button', { name: 'Lewati pengenalan' })).toBeTruthy();
   });
 
-  it.each(['google', 'apple'] as const)('completes the %s fixture flow through account bootstrap', async (provider) => {
-    renderWireframe();
+  it.each(['google', 'apple'] as const)(
+    'completes the %s fixture flow through account bootstrap',
+    async (provider) => {
+      renderWireframe();
 
-    fireEvent.press(
-      await screen.findByRole('button', {
-        name: provider === 'google' ? 'Lanjutkan dengan Google' : 'Lanjutkan dengan Apple',
-      }),
-    );
-    expect(await screen.findByText('Callback OAuth (fixture)')).toBeTruthy();
-    fireEvent.press(screen.getByRole('button', { name: 'Validasi callback fixture' }));
-    expect(await screen.findByText('Lengkapi akun (fixture)')).toBeTruthy();
+      fireEvent.press(
+        await screen.findByRole('button', {
+          name: provider === 'google' ? 'Lanjutkan dengan Google' : 'Lanjutkan dengan Apple',
+        }),
+      );
+      expect(await screen.findByText('Callback OAuth (fixture)')).toBeTruthy();
+      fireEvent.press(screen.getByRole('button', { name: 'Validasi callback fixture' }));
+      expect(await screen.findByText('Lengkapi akun (fixture)')).toBeTruthy();
 
-    fireEvent.changeText(screen.getByLabelText('Nama tampilan (wajib)'), 'Demo Fixture');
-    fireEvent.press(screen.getByRole('checkbox', { name: 'Syarat Layanan fixture' }));
-    fireEvent.press(screen.getByRole('checkbox', { name: 'Kebijakan Privasi fixture' }));
-    fireEvent.press(screen.getByRole('button', { name: 'Simpan akun fixture' }));
+      fireEvent.changeText(screen.getByLabelText('Nama tampilan (wajib)'), 'Demo Fixture');
+      fireEvent.press(screen.getByRole('checkbox', { name: 'Syarat Layanan fixture' }));
+      fireEvent.press(screen.getByRole('checkbox', { name: 'Kebijakan Privasi fixture' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Simpan akun fixture' }));
 
-    expect(await screen.findByText('Wireframe akun selesai')).toBeTruthy();
-    expect(screen.getByText('Login asli belum diaktifkan.')).toBeTruthy();
-  });
+      expect(await screen.findByText('Wireframe akun selesai')).toBeTruthy();
+      expect(screen.getByText(/Login asli belum diaktifkan/)).toBeTruthy();
+    },
+  );
 
   it('supports provider cancellation and returns to the welcome state', async () => {
     renderWireframe({ google: 'cancelled' });
@@ -109,9 +112,9 @@ describe('F01 auth and account bootstrap wireframe', () => {
   ] as const)('surfaces a %s session recovery action', async (session, title, action) => {
     renderWireframe({ session });
 
-    await advanceToAccountBootstrap();
-    // The session state is resolved before account bootstrap is shown; this assertion protects
-    // the fixture contract when the session outcome is changed in the implementation.
+    fireEvent.press(await screen.findByRole('button', { name: 'Lanjutkan dengan Google' }));
+    expect(await screen.findByText('Callback OAuth (fixture)')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Validasi callback fixture' }));
     expect(await screen.findByText(title)).toBeTruthy();
     expect(screen.getByRole('button', { name: action })).toBeTruthy();
   });
@@ -124,18 +127,22 @@ describe('F01 auth and account bootstrap wireframe', () => {
     expect(await screen.findByText('Nama tampilan wajib diisi')).toBeTruthy();
 
     fireEvent.changeText(screen.getByLabelText('Nama tampilan (wajib)'), 'Demo Fixture');
-    fireEvent.press(screen.getByRole('button', { name: 'Syarat Layanan fixture' }));
-    fireEvent.press(screen.getByRole('button', { name: 'Kebijakan Privasi fixture' }));
+    fireEvent.press(screen.getByRole('checkbox', { name: 'Syarat Layanan fixture' }));
+    fireEvent.press(screen.getByRole('checkbox', { name: 'Kebijakan Privasi fixture' }));
     fireEvent.press(screen.getByRole('button', { name: 'Simpan akun fixture' }));
     expect(await screen.findByText('Wireframe akun selesai')).toBeTruthy();
   });
 
   it('parses only the allowlisted fixture callback and rejects malformed or sensitive URLs', () => {
-    expect(parseAuthCallback('financeapp://auth/callback?provider=google&state=fixture-success')).toEqual({
+    expect(
+      parseAuthCallback('financeapp://auth/callback?provider=google&state=fixture-success'),
+    ).toEqual({
       kind: 'accepted',
       provider: 'google',
     });
-    expect(parseAuthCallback('https://attacker.example/callback?provider=google&state=fixture-success')).toEqual({
+    expect(
+      parseAuthCallback('https://attacker.example/callback?provider=google&state=fixture-success'),
+    ).toEqual({
       kind: 'rejected',
       code: 'malformed-callback',
     });
@@ -146,13 +153,13 @@ describe('F01 auth and account bootstrap wireframe', () => {
   });
 
   it('does not call Supabase Auth or production network while running fixture interactions', async () => {
-    const fetchSpy = jest.spyOn(global, 'fetch');
+    const fetchSpy = jest.spyOn(globalThis, 'fetch');
     const fixture = createAuthFixture();
     const auth = await fixture.startSignIn('google');
     if (auth.kind === 'callback') {
       fixture.resolveCallback(auth.callbackUrl);
     }
-    await fixture.bootstrapSession();
+    await fixture.bootstrapSession('google');
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
