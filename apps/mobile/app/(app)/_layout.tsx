@@ -1,11 +1,25 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 
 import { useSession } from '../../src/app/providers/session-provider';
+import { BottomNavigation } from '../../src/navigation/bottom-navigation';
 
 export default function AppLayout() {
   const { state } = useSession();
   if (state.status !== 'signedIn') {
     return <Redirect href="/(public)" />;
   }
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Tabs
+      tabBar={(props) => <BottomNavigation {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="transactions" options={{ title: 'Transactions' }} />
+      <Tabs.Screen name="planning" options={{ title: 'Planning' }} />
+      <Tabs.Screen name="reports" options={{ title: 'Reports' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="capture" options={{ href: null }} />
+      <Tabs.Screen name="screen-catalog" options={{ href: null }} />
+    </Tabs>
+  );
 }

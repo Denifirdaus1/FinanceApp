@@ -2,17 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { router } from 'expo-router';
 
-import {
-  BOTTOM_TABS,
-  FEATURE_IDS,
-  READINESS_STATUSES,
-  ROUTE_MANIFEST,
-} from '../route-manifest';
-import {
-  DEEP_LINK_TYPES,
-  resolveDeepLink,
-  resolveDeepLinkUrl,
-} from '../deep-links';
+import { BOTTOM_TABS, FEATURE_IDS, READINESS_STATUSES, ROUTE_MANIFEST } from '../route-manifest';
+import { DEEP_LINK_TYPES, resolveDeepLink, resolveDeepLinkUrl } from '../deep-links';
 import { CaptureAction, createMockCaptureResult } from '../capture-action';
 import { SCREEN_CATALOG } from '../../screens/screen-catalog/screen-catalog';
 
@@ -29,8 +20,9 @@ jest.mock('@financeapp/ui', () => ({
     label: string;
     onPress?: () => void;
   }) => {
-    const React = require('react');
-    const { Pressable: MockPressable, Text: MockText } = require('react-native');
+    const React = jest.requireActual<typeof import('react')>('react');
+    const { Pressable: MockPressable, Text: MockText } =
+      jest.requireActual<typeof import('react-native')>('react-native');
     return React.createElement(
       MockPressable,
       {
@@ -133,8 +125,8 @@ describe('U01 navigation foundation', () => {
     expect(SCREEN_CATALOG.map((entry) => entry.routeId)).toEqual(
       ROUTE_MANIFEST.map((entry) => entry.routeId),
     );
-    expect(
-      SCREEN_CATALOG.every((entry) => READINESS_STATUSES.includes(entry.readiness)),
-    ).toBe(true);
+    expect(SCREEN_CATALOG.every((entry) => READINESS_STATUSES.includes(entry.readiness))).toBe(
+      true,
+    );
   });
 });
