@@ -80,7 +80,8 @@ describe('U00 component contracts', () => {
     expect(onAmountChange).toHaveBeenCalledWith(126000n);
 
     fireEvent.press(screen.getByRole('button', { name: 'Rekening' }));
-    fireEvent.press(screen.getByText('Tunai'));
+    const tunaiButtons = screen.getAllByRole('button', { name: 'Tunai' });
+    fireEvent.press(tunaiButtons[tunaiButtons.length - 1]!);
     expect(onSelect).toHaveBeenCalledWith('cash');
   });
 
