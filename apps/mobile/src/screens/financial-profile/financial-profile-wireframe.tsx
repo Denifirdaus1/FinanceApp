@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button, Card, Input } from '@financeapp/ui';
@@ -17,6 +17,7 @@ import {
   resolveTimezoneForRender,
   validateFinancialPreferences,
   type FinancialProfileFixture,
+  type FinancialProfileLoadResult,
   type FinancialProfileSaveResult,
   type FinancialPreferences,
   type FinancialValidationField,
@@ -87,31 +88,33 @@ export function FinancialProfileWireframe({
     { kind: 'conflict' }
   > | null>(null);
 
-  const load = () => {
+  const applyLoadResult = useCallback((result: FinancialProfileLoadResult) => {
+    if (result.kind === 'loaded') {
+      setPreferences(result.preferences);
+      setStep(0);
+      setValidationError(null);
+      setStatus('editing');
+      return;
+    }
+    if (result.kind === 'offline') {
+      setLastAction('load');
+      setStatus('offline');
+      return;
+    }
+    setLastAction('load');
+    setStatusError('Profil fixture gagal dimuat');
+    setStatus('error');
+  }, []);
+
+  const load = useCallback(() => {
     setStatus('loading');
     setStatusError(null);
-    void fixture.load().then((result) => {
-      if (result.kind === 'loaded') {
-        setPreferences(result.preferences);
-        setStep(0);
-        setValidationError(null);
-        setStatus('editing');
-        return;
-      }
-      if (result.kind === 'offline') {
-        setLastAction('load');
-        setStatus('offline');
-        return;
-      }
-      setLastAction('load');
-      setStatusError('Profil fixture gagal dimuat');
-      setStatus('error');
-    });
-  };
+    void fixture.load().then(applyLoadResult);
+  }, [applyLoadResult, fixture]);
 
   useEffect(() => {
-    load();
-  }, [fixture]);
+    void fixture.load().then(applyLoadResult);
+  }, [applyLoadResult, fixture]);
 
   const updatePreferences = (patch: Partial<FinancialPreferences>) => {
     setPreferences((current) => ({ ...current, ...patch }));
