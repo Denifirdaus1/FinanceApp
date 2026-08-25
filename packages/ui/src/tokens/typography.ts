@@ -1,7 +1,11 @@
 import type { TextStyle } from 'react-native';
 
 export const fontFamilies = {
-  interface: 'Plus Jakarta Sans',
+  interface: 'PlusJakartaSans_400Regular',
+  regular: 'PlusJakartaSans_400Regular',
+  medium: 'PlusJakartaSans_500Medium',
+  semiBold: 'PlusJakartaSans_600SemiBold',
+  bold: 'PlusJakartaSans_700Bold',
   iosFallback: 'SF Pro Text',
   androidFallback: 'Roboto',
   systemFallback: 'sans-serif',
@@ -9,78 +13,66 @@ export const fontFamilies = {
 
 export const typography = {
   display: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.bold,
     fontSize: 32,
     lineHeight: 40,
-    fontWeight: '700',
   },
   heading1: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.bold,
     fontSize: 28,
     lineHeight: 36,
-    fontWeight: '700',
   },
   heading2: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.bold,
     fontSize: 24,
     lineHeight: 32,
-    fontWeight: '700',
   },
   heading3: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.semiBold,
     fontSize: 20,
     lineHeight: 28,
-    fontWeight: '600',
   },
   title: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.semiBold,
     fontSize: 18,
     lineHeight: 26,
-    fontWeight: '600',
   },
   bodyLarge: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.medium,
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '500',
   },
   body: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.regular,
     fontSize: 14,
     lineHeight: 21,
-    fontWeight: '400',
   },
   label: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.semiBold,
     fontSize: 13,
     lineHeight: 18,
-    fontWeight: '600',
   },
   caption: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.medium,
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '500',
   },
   amountHero: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.bold,
     fontSize: 36,
     lineHeight: 44,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   amountCard: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.bold,
     fontSize: 22,
     lineHeight: 28,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   amountRow: {
-    fontFamily: fontFamilies.interface,
+    fontFamily: fontFamilies.semiBold,
     fontSize: 15,
     lineHeight: 22,
-    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
 } as const satisfies Record<string, TextStyle>;

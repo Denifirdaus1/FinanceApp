@@ -1,6 +1,7 @@
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -47,7 +48,6 @@ export function Dialog({
 
   return (
     <Modal
-      accessibilityViewIsModal
       animationType={reducedMotion ? 'none' : 'fade'}
       onRequestClose={onCancel}
       transparent
@@ -61,6 +61,7 @@ export function Dialog({
           style={[styles.scrim, { backgroundColor: tokens.colors.scrim }]}
         />
         <View
+          accessibilityViewIsModal
           style={[
             styles.dialog,
             {
@@ -68,6 +69,7 @@ export function Dialog({
               borderColor: tokens.colors.borderStrong,
               borderRadius: tokens.radius.lg,
               gap: tokens.spacing.space3,
+              maxHeight: tokens.componentMetrics.dialogMaxHeight,
               maxWidth: tokens.componentMetrics.dialogMaxWidth,
               padding: tokens.spacing.space5,
             },
@@ -78,35 +80,47 @@ export function Dialog({
         >
           <Text
             accessibilityRole="header"
-            style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}
+            style={[
+              tokens.typography.heading3,
+              { color: tokens.colors.textPrimary, flexShrink: 1 },
+            ]}
           >
             {title}
           </Text>
-          <Text
-            accessibilityLiveRegion="assertive"
-            accessibilityRole="alert"
-            style={[
-              tokens.typography.body,
-              styles.message,
-              { color: tokens.colors.textSecondary, marginTop: tokens.spacing.space1 },
-            ]}
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: tokens.spacing.space1 }}
+            keyboardShouldPersistTaps="handled"
+            style={{ flexShrink: 1, maxHeight: tokens.componentMetrics.dialogBodyMaxHeight }}
           >
-            {message}
-          </Text>
+            <Text
+              accessibilityLiveRegion="assertive"
+              accessibilityRole="alert"
+              style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}
+            >
+              {message}
+            </Text>
+          </ScrollView>
           <View
             style={[
               styles.actions,
               {
                 gap: tokens.interaction.minimumAdjacentTargetGap,
                 marginTop: tokens.spacing.space1,
+                width: '100%',
               },
             ]}
           >
-            <Button label={cancelLabel} onPress={onCancel} variant="tertiary" />
+            <Button
+              label={cancelLabel}
+              onPress={onCancel}
+              style={styles.actionButton}
+              variant="tertiary"
+            />
             <Button
               label={confirmLabel}
               loading={loading}
               onPress={onConfirm}
+              style={styles.actionButton}
               variant={destructive ? 'destructive' : 'primary'}
             />
           </View>
@@ -132,7 +146,10 @@ const styles = StyleSheet.create({
   dialog: {
     width: '100%',
   },
-  message: {},
+  actionButton: {
+    flexShrink: 1,
+    maxWidth: '100%',
+  },
   actions: {
     alignItems: 'center',
     flexDirection: 'row',

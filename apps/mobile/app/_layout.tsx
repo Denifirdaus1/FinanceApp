@@ -1,4 +1,12 @@
 import { Stack } from 'expo-router';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  useFonts,
+} from '@expo-google-fonts/plus-jakarta-sans';
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
@@ -9,7 +17,26 @@ import { GlobalErrorBoundary } from '../src/app/errors/error-boundary';
 import { AppProviders } from '../src/app/providers';
 import { useSession } from '../src/app/providers/session-provider';
 
+void SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      void SplashScreen.hideAsync().catch(() => undefined);
+    }
+  }, [fontError, fontsLoaded]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <GlobalErrorBoundary>
       <AppProviders>

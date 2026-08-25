@@ -55,6 +55,18 @@ function getDirectColor(block: string, name: string): string {
   return match[1];
 }
 
+function getNestedColor(block: string, group: string, name: string): string {
+  const groupMatch = new RegExp(`^  ${group}: \\{([\\s\\S]*?)^  \\},`, 'm').exec(block);
+  if (!groupMatch?.[1]) {
+    throw new Error(`Could not find ${group} color group`);
+  }
+  const match = new RegExp(`^    ${name}: '([^']+)'`, 'm').exec(groupMatch[1]);
+  if (!match?.[1]) {
+    throw new Error(`Could not find ${group}.${name} color token`);
+  }
+  return match[1];
+}
+
 function relativeLuminance(hex: string): number {
   const channels = [0, 2, 4].map(
     (offset) => Number.parseInt(hex.slice(offset + 1, offset + 3), 16) / 255,
@@ -89,6 +101,7 @@ describe('U00 public UI contract', () => {
     ]) {
       expect(entry).toMatch(new RegExp(`\\b${name}\\b`));
     }
+    expect(entry).toMatch(/\bResourceState\b/);
     expect(entry).not.toContain('export *');
   });
 
@@ -99,6 +112,7 @@ describe('U00 public UI contract', () => {
       .join('\n');
 
     expect(tokenSource).toContain('canvas');
+    expect(tokenSource).toContain('disabled');
     expect(tokenSource).toContain('surfaceRaised');
     expect(tokenSource).toContain('textPrimary');
     expect(tokenSource).toContain('primaryContainer');
@@ -135,6 +149,12 @@ describe('U00 public UI contract', () => {
           contrastRatio(getDirectColor(block, foreground), getDirectColor(block, background)),
         ).toBeGreaterThanOrEqual(4.5);
       }
+      expect(
+        contrastRatio(
+          getNestedColor(block, 'disabled', 'text'),
+          getNestedColor(block, 'disabled', 'surface'),
+        ),
+      ).toBeGreaterThanOrEqual(4.5);
     }
   });
 
@@ -155,6 +175,12 @@ describe('U00 public UI contract', () => {
         !filePath.endsWith('.test.tsx'),
     );
     for (const filePath of mobileFiles) {
+      expect(fs.readFileSync(filePath, 'utf8')).not.toMatch(/#[0-9A-Fa-f]{3,8}\b/);
+    }
+    const mobileRouteFiles = listFiles(path.join(REPOSITORY_ROOT, 'apps/mobile/app')).filter(
+      (filePath) => filePath.endsWith('.ts') || filePath.endsWith('.tsx'),
+    );
+    for (const filePath of mobileRouteFiles) {
       expect(fs.readFileSync(filePath, 'utf8')).not.toMatch(/#[0-9A-Fa-f]{3,8}\b/);
     }
   });
@@ -179,8 +205,34 @@ describe('U00 public UI contract', () => {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
-    expect(pkg.peerDependencies).toMatchObject({ react: '19.2.3', 'react-native': '0.85.3' });
+    expect(pkg.peerDependencies).toMatchObject({
+      react: '19.2.3',
+      'react-native': '0.85.3',
+      'react-native-safe-area-context': '5.7.0',
+    });
     expect(pkg.dependencies ?? {}).not.toHaveProperty('storybook');
     expect(pkg.devDependencies ?? {}).not.toHaveProperty('@storybook/react-native');
+  });
+
+  it('loads every Plus Jakarta Sans weight before rendering the application shell', () => {
+    const pkg = JSON.parse(read('apps/mobile/package.json')) as {
+      dependencies?: Record<string, string>;
+    };
+    expect(pkg.dependencies).toHaveProperty('@expo-google-fonts/plus-jakarta-sans');
+    expect(pkg.dependencies).toHaveProperty('expo-font');
+    expect(pkg.dependencies).toHaveProperty('expo-splash-screen');
+
+    const rootLayout = read('apps/mobile/app/_layout.tsx');
+    expect(rootLayout).toContain('useFonts');
+    expect(rootLayout).toContain('SplashScreen.preventAutoHideAsync');
+    expect(rootLayout).toContain('SplashScreen.hideAsync');
+    for (const font of [
+      'PlusJakartaSans_400Regular',
+      'PlusJakartaSans_500Medium',
+      'PlusJakartaSans_600SemiBold',
+      'PlusJakartaSans_700Bold',
+    ]) {
+      expect(rootLayout).toContain(font);
+    }
   });
 });

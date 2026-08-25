@@ -1,1 +1,1 @@
-export { ComponentCatalog, catalogComponentNames } from './catalog';
+export { ComponentCatalog, catalogComponentNames, type ComponentCatalogProps } from './catalog';

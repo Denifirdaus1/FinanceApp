@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import {
   Button,
@@ -19,6 +20,7 @@ import {
   Skeleton,
   ThemeProvider,
   Toast,
+  type ColorScheme,
   useTheme,
 } from '@financeapp/ui';
 
@@ -41,11 +43,26 @@ export const catalogComponentNames = [
   'ChartFrame',
 ] as const;
 
-export function ComponentCatalog(): React.JSX.Element {
+const CATALOG_SAFE_AREA_METRICS = {
+  frame: { height: 640, width: 320, x: 0, y: 0 },
+  insets: { bottom: 0, left: 0, right: 0, top: 0 },
+};
+
+export interface ComponentCatalogProps {
+  scheme?: ColorScheme;
+  reducedMotion?: boolean;
+}
+
+export function ComponentCatalog({
+  scheme = 'light',
+  reducedMotion = true,
+}: ComponentCatalogProps = {}): React.JSX.Element {
   return (
-    <ThemeProvider scheme="light" reducedMotion>
-      <CatalogContent />
-    </ThemeProvider>
+    <SafeAreaProvider initialMetrics={CATALOG_SAFE_AREA_METRICS}>
+      <ThemeProvider scheme={scheme} reducedMotion={reducedMotion}>
+        <CatalogContent />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 
@@ -53,31 +70,33 @@ function CatalogContent(): React.JSX.Element {
   const { tokens } = useTheme();
   const [amount, setAmount] = useState<bigint | null>(125000n);
   const [account, setAccount] = useState<'cash' | 'bank'>('cash');
+  const [note, setNote] = useState('Makan siang');
   const [sheetVisible, setSheetVisible] = useState(false);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [toastVisible, setToastVisible] = useState(true);
+  const showToast = () => setToastVisible(true);
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView
+      contentContainerStyle={[{ gap: tokens.spacing.space6, padding: tokens.spacing.space5 }]}
+    >
       <Text style={[tokens.typography.caption, styles.eyebrow, { color: tokens.colors.primary }]}>
         U00 / INTERNAL CATALOG
       </Text>
       <Text style={[tokens.typography.heading1, { color: tokens.colors.textPrimary }]}>
         Warm pastel primitives
       </Text>
-      <Text
-        style={[tokens.typography.body, styles.description, { color: tokens.colors.textSecondary }]}
-      >
+      <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
         Fixture deterministik untuk review state, accessibility, privacy, dan responsif.
       </Text>
 
       <Section title="Actions and forms">
         <Button label="Simpan transaksi" onPress={() => setToastVisible(true)} />
-        <Button label="Aksi sekunder" onPress={() => undefined} variant="secondary" />
-        <Button label="Icon action" onPress={() => undefined} variant="icon">
+        <Button label="Aksi sekunder" onPress={showToast} variant="secondary" />
+        <Button label="Icon action" onPress={() => setSheetVisible(true)} variant="icon">
           <Text>+</Text>
         </Button>
-        <Input label="Catatan" value="Makan siang" onChangeText={() => undefined} hint="Opsional" />
+        <Input label="Catatan" value={note} onChangeText={setNote} hint="Opsional" />
         <MoneyInput label="Nominal" valueMinor={amount} onChangeMinor={setAmount} />
         <Select
           label="Rekening"
@@ -92,7 +111,7 @@ function CatalogContent(): React.JSX.Element {
       </Section>
 
       <Section title="Surfaces and rows">
-        <Card accessibilityLabel="Saldo utama" onPress={() => undefined}>
+        <Card accessibilityLabel="Saldo utama" onPress={showToast}>
           <Text style={[tokens.typography.title, { color: tokens.colors.textPrimary }]}>
             Saldo utama
           </Text>
@@ -102,7 +121,7 @@ function CatalogContent(): React.JSX.Element {
           title="Makan siang"
           subtitle="Manual / Hari ini"
           value="-Rp45.000"
-          onPress={() => undefined}
+          onPress={showToast}
           accessibilityLabel="Makan siang, minus empat puluh lima ribu rupiah"
         />
       </Section>
@@ -113,23 +132,23 @@ function CatalogContent(): React.JSX.Element {
           title="Belum ada aktivitas"
           message="Tambahkan transaksi pertama untuk melihat ringkasan."
           actionLabel="Tambah transaksi"
-          onAction={() => undefined}
+          onAction={showToast}
         />
         <ErrorState
           title="Tidak dapat memuat"
           message="Data lokal tetap aman. Coba lagi."
-          onRetry={() => undefined}
+          onRetry={showToast}
         />
         <PermissionState
           title="Izinkan kamera"
           message="Kamera digunakan untuk membaca struk."
           actionLabel="Buka pengaturan"
-          onAction={() => undefined}
+          onAction={showToast}
           alternativeLabel="Catat manual"
-          onAlternative={() => undefined}
+          onAlternative={showToast}
           status="denied"
         />
-        <OfflineBanner onRetry={() => undefined} />
+        <OfflineBanner onRetry={showToast} />
         <SensitiveValue value="Rp125.000" hidden accessibilityLabel="Nominal disembunyikan" />
       </Section>
 
@@ -137,7 +156,9 @@ function CatalogContent(): React.JSX.Element {
         <Button label="Buka sheet" onPress={() => setSheetVisible(true)} variant="secondary" />
         <Button label="Buka dialog" onPress={() => setDialogVisible(true)} variant="secondary" />
         <Sheet visible={sheetVisible} title="Pilih rekening" onClose={() => setSheetVisible(false)}>
-          <Text>Sheet mendukung pilihan singkat dan safe-area.</Text>
+          <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
+            Sheet mendukung pilihan singkat dan safe-area.
+          </Text>
         </Sheet>
         <Dialog
           visible={dialogVisible}
@@ -165,7 +186,15 @@ function CatalogContent(): React.JSX.Element {
           summary="Pengeluaran lebih tinggi dari Juli."
           dataTable={<Text>Alternatif data tabel tersedia.</Text>}
         >
-          <View style={[styles.chartPlaceholder, { backgroundColor: tokens.colors.surfaceMuted }]}>
+          <View
+            style={[
+              styles.chartPlaceholder,
+              {
+                backgroundColor: tokens.colors.surfaceMuted,
+                minHeight: tokens.componentMetrics.chartMinHeight,
+              },
+            ]}
+          >
             <Text style={{ color: tokens.colors.textPrimary }}>Chart surface fixture</Text>
           </View>
         </ChartFrame>
@@ -185,33 +214,21 @@ function CatalogContent(): React.JSX.Element {
 function Section({ title, children }: { title: string; children: ReactNode }): React.JSX.Element {
   const { tokens } = useTheme();
   return (
-    <View style={styles.section}>
+    <View style={{ gap: tokens.spacing.space3 }}>
       <Text style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}>
         {title}
       </Text>
-      <View style={styles.sectionContent}>{children}</View>
+      <View style={{ gap: tokens.spacing.space3 }}>{children}</View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    gap: 24,
-    padding: 20,
-  },
   eyebrow: {
     letterSpacing: 1,
-  },
-  description: {},
-  section: {
-    gap: 12,
-  },
-  sectionContent: {
-    gap: 12,
   },
   chartPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 160,
   },
 });

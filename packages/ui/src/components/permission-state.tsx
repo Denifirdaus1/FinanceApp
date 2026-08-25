@@ -59,7 +59,10 @@ export function PermissionState({
       <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
         {message}
       </Text>
-      <Text style={[tokens.typography.body, { color: tokens.colors.warning }]}>
+      <Text
+        accessibilityLiveRegion="polite"
+        style={[tokens.typography.body, { color: tokens.colors.warning }]}
+      >
         {statusMessage}
       </Text>
       <Button label={actionLabel} onPress={onAction} variant="secondary" />

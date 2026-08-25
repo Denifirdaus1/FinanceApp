@@ -2,6 +2,7 @@ export {
   darkColors,
   lightColors,
   type ChartColors,
+  type DisabledColors,
   type PastelColors,
   type ThemeColors,
 } from './colors';
@@ -22,6 +23,7 @@ export {
 } from './metrics';
 export {
   formatAmountInput,
+  formatEditableMoneyInput,
   formatMoney,
   getCurrencyFractionDigits,
   parseMoneyInput,

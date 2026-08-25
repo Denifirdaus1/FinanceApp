@@ -15,6 +15,12 @@ export interface PastelColors {
   amber: string;
 }
 
+export interface DisabledColors {
+  surface: string;
+  text: string;
+  border: string;
+}
+
 export interface ThemeColors {
   canvas: string;
   surface: string;
@@ -36,6 +42,7 @@ export interface ThemeColors {
   scrim: string;
   skeleton: string;
   pastel: PastelColors;
+  disabled: DisabledColors;
   chart: ChartColors;
 }
 
@@ -65,6 +72,11 @@ export const lightColors = {
     dustyBlue: '#DCE8F2',
     plum: '#E4D9EC',
     amber: '#F3E0C3',
+  },
+  disabled: {
+    surface: '#F6EDDF',
+    text: '#67584A',
+    border: '#927D69',
   },
   chart: {
     primary: '#7A5C3E',
@@ -102,6 +114,11 @@ export const darkColors = {
     dustyBlue: '#2E4355',
     plum: '#4A3656',
     amber: '#4E3D25',
+  },
+  disabled: {
+    surface: '#352B23',
+    text: '#DCCDBD',
+    border: '#BBAA99',
   },
   chart: {
     primary: '#E3B98B',

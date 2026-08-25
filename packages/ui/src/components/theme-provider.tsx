@@ -17,10 +17,13 @@ export interface ThemeProviderProps {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-function usePlatformReducedMotion(): boolean {
+function usePlatformReducedMotion(override?: boolean): boolean {
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
+    if (override !== undefined) {
+      return undefined;
+    }
     let mounted = true;
     const subscription = AccessibilityInfo.addEventListener(
       'reduceMotionChanged',
@@ -38,9 +41,9 @@ function usePlatformReducedMotion(): boolean {
       mounted = false;
       subscription.remove();
     };
-  }, []);
+  }, [override]);
 
-  return reducedMotion;
+  return override ?? reducedMotion;
 }
 
 function resolveScheme(systemScheme: ColorSchemeName, requestedScheme?: ColorScheme): ColorScheme {
@@ -53,15 +56,15 @@ function resolveScheme(systemScheme: ColorSchemeName, requestedScheme?: ColorSch
 export function ThemeProvider({ children, scheme, reducedMotion }: ThemeProviderProps) {
   const systemScheme = useColorScheme();
   const resolvedScheme = resolveScheme(systemScheme, scheme);
-  const platformReducedMotion = usePlatformReducedMotion();
+  const platformReducedMotion = usePlatformReducedMotion(reducedMotion);
   const tokens = useMemo(() => getTheme(resolvedScheme), [resolvedScheme]);
   const value = useMemo(
     () => ({
       scheme: resolvedScheme,
       tokens,
-      reducedMotion: reducedMotion ?? platformReducedMotion,
+      reducedMotion: platformReducedMotion,
     }),
-    [platformReducedMotion, reducedMotion, resolvedScheme, tokens],
+    [platformReducedMotion, resolvedScheme, tokens],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

@@ -8,7 +8,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import type { ReactNode } from 'react';
+import { useContext, type ReactNode } from 'react';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
 import { Button } from './button';
 import { useReducedMotion, useTheme } from './theme-provider';
@@ -30,12 +31,14 @@ export function Sheet({
   children,
   onClose,
   closeLabel = 'Tutup',
-  safeAreaBottomInset = 0,
+  safeAreaBottomInset,
   style,
   testID,
 }: SheetProps) {
   const { tokens } = useTheme();
   const reducedMotion = useReducedMotion();
+  const safeAreaInsets = useContext(SafeAreaInsetsContext);
+  const bottomInset = safeAreaBottomInset ?? safeAreaInsets?.bottom ?? 0;
 
   if (!visible) {
     return null;
@@ -66,7 +69,7 @@ export function Sheet({
               borderTopRightRadius: tokens.radius.xl,
               borderTopWidth: tokens.stroke.hairline,
               maxHeight: tokens.componentMetrics.sheetMaxHeight,
-              paddingBottom: tokens.spacing.space4 + safeAreaBottomInset,
+              paddingBottom: tokens.spacing.space4 + bottomInset,
               paddingHorizontal: tokens.spacing.space5,
               paddingTop: tokens.spacing.space3,
             },
@@ -86,7 +89,10 @@ export function Sheet({
           >
             <Text
               accessibilityRole="header"
-              style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}
+              style={[
+                tokens.typography.heading3,
+                { color: tokens.colors.textPrimary, flexShrink: 1, minWidth: 0 },
+              ]}
             >
               {title}
             </Text>

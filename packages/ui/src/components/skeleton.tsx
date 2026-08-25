@@ -67,7 +67,9 @@ export function Skeleton({
     style,
   ];
   const accessibilityProps = {
+    accessible: true,
     accessibilityLabel: 'Memuat',
+    accessibilityRole: 'progressbar',
     accessibilityState: { busy: true },
     testID,
   } as const;

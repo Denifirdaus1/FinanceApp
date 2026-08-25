@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
 
@@ -34,14 +34,15 @@ export function Toast({
 }: ToastProps) {
   const { tokens } = useTheme();
   const resolvedDuration = duration ?? tokens.componentMetrics.toastDuration;
+  const dismiss = useEffectEvent(onDismiss);
 
   useEffect(() => {
     if (!visible || resolvedDuration <= 0) {
       return undefined;
     }
-    const timeout = setTimeout(onDismiss, resolvedDuration);
+    const timeout = setTimeout(dismiss, resolvedDuration);
     return () => clearTimeout(timeout);
-  }, [onDismiss, resolvedDuration, visible]);
+  }, [resolvedDuration, visible]);
 
   if (!visible) {
     return null;

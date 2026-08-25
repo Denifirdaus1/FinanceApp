@@ -52,10 +52,9 @@ export function Input({
   const { tokens } = useTheme();
   const [focused, setFocused] = useState(false);
   const labelText = required ? `${label} (wajib)` : label;
-  const inputLabel = accessibilityLabel ?? labelText;
-  const describedHint = error
-    ? `${accessibilityHint ? `${accessibilityHint}. ` : ''}${error}`
-    : accessibilityHint;
+  const baseInputLabel = accessibilityLabel ?? labelText;
+  const inputLabel = baseInputLabel;
+  const describedHint = accessibilityHint;
   const borderColor = error
     ? tokens.colors.danger
     : focused
@@ -76,14 +75,14 @@ export function Input({
         style={[
           styles.inputShell,
           {
-            backgroundColor: tokens.colors.surface,
-            borderColor,
+            backgroundColor: disabled ? tokens.colors.disabled.surface : tokens.colors.surface,
+            borderColor: disabled ? tokens.colors.disabled.border : borderColor,
             borderRadius: tokens.radius.md,
-            borderWidth: focused || error ? tokens.stroke.focus : tokens.stroke.control,
+            borderWidth:
+              !disabled && (focused || error) ? tokens.stroke.focus : tokens.stroke.control,
             minHeight: tokens.interaction.buttonHeight,
             paddingHorizontal: tokens.spacing.space4,
           },
-          disabled && { opacity: tokens.interaction.disabledOpacity },
         ]}
       >
         {leading}
@@ -102,12 +101,15 @@ export function Input({
             setFocused(true);
             onFocus?.(event);
           }}
-          placeholderTextColor={placeholderTextColor ?? tokens.colors.textMuted}
+          placeholderTextColor={
+            placeholderTextColor ??
+            (disabled ? tokens.colors.disabled.text : tokens.colors.textMuted)
+          }
           style={[
             tokens.typography.bodyLarge,
             styles.input,
             {
-              color: tokens.colors.textPrimary,
+              color: disabled ? tokens.colors.disabled.text : tokens.colors.textPrimary,
               minHeight: tokens.interaction.minimumTouchTarget,
               paddingVertical: tokens.spacing.space2,
             },

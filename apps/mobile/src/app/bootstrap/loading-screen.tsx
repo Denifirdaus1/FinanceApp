@@ -3,17 +3,32 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../providers/theme-provider';
 
 export function BootstrapLoadingScreen() {
-  const { tokens } = useTheme();
+  const { tokens, reducedMotion } = useTheme();
   return (
     <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityState={{ busy: true }}
+      accessibilityLabel="Memuat aplikasi"
       style={[
         styles.container,
         { backgroundColor: tokens.colors.canvas, padding: tokens.spacing.space6 },
       ]}
       accessibilityLiveRegion="polite"
-      accessibilityLabel="Memuat aplikasi"
     >
-      <ActivityIndicator color={tokens.colors.primary} size="large" />
+      {reducedMotion ? (
+        <View
+          accessible={false}
+          style={{
+            backgroundColor: tokens.colors.primary,
+            borderRadius: tokens.radius.full,
+            height: tokens.icon.small,
+            width: tokens.icon.small,
+          }}
+        />
+      ) : (
+        <ActivityIndicator accessible={false} color={tokens.colors.primary} size="large" />
+      )}
       <Text
         style={[
           tokens.typography.bodyLarge,

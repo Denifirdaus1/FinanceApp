@@ -14,6 +14,7 @@
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck",
     "test:unit": "node scripts/test-unit.mjs",
+    "test:coverage:u00": "node scripts/test-u00-coverage.mjs",
     "test:feature": "node scripts/test-feature.mjs",
     "supabase:test": "supabase db reset && supabase test db",
     "test:contract": "pnpm --filter @financeapp/contracts test:unit",

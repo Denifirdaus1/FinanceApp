@@ -1,41 +1,35 @@
 import type { ReactNode } from 'react';
 
-import { ErrorState } from '../components/error-state';
 import { OfflineBanner } from '../components/offline-banner';
 import { Skeleton } from '../components/skeleton';
 
 export type ResourceStatus = 'loading' | 'empty' | 'offline' | 'error' | 'ready';
 
-export interface ResourceStateProps {
-  status: ResourceStatus;
+interface ResourceStateBaseProps {
   children: ReactNode;
   loading?: ReactNode;
-  empty?: ReactNode;
   offline?: ReactNode;
-  error?: ReactNode;
 }
 
-export function ResourceState({
-  status,
-  children,
-  loading = <Skeleton />,
-  empty = null,
-  offline = <OfflineBanner />,
-  error = (
-    <ErrorState message="Data lokal tetap aman. Coba lagi." title="Tidak dapat memuat data" />
-  ),
-}: ResourceStateProps) {
-  if (status === 'loading') {
-    return loading;
+export type ResourceStateProps =
+  | (ResourceStateBaseProps & { status: 'loading' })
+  | (ResourceStateBaseProps & { status: 'empty'; empty: ReactNode })
+  | (ResourceStateBaseProps & { status: 'offline' })
+  | (ResourceStateBaseProps & { status: 'error'; error: ReactNode })
+  | (ResourceStateBaseProps & { status: 'ready' });
+
+export function ResourceState(props: ResourceStateProps): ReactNode {
+  if (props.status === 'loading') {
+    return props.loading ?? <Skeleton />;
   }
-  if (status === 'empty') {
-    return empty;
+  if (props.status === 'empty') {
+    return props.empty;
   }
-  if (status === 'offline') {
-    return offline;
+  if (props.status === 'offline') {
+    return props.offline ?? <OfflineBanner />;
   }
-  if (status === 'error') {
-    return error;
+  if (props.status === 'error') {
+    return props.error;
   }
-  return children;
+  return props.children;
 }

@@ -53,6 +53,8 @@ export const componentMetrics = {
   dialogMaxWidth: 520,
   emptyMessageMaxWidth: 420,
   errorMessageMaxWidth: 680,
+  dialogMaxHeight: '90%',
+  dialogBodyMaxHeight: '70%',
   toastMessageMinWidth: 160,
   toastDuration: 5000,
   bannerMessageMinWidth: 180,

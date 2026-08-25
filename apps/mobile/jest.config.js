@@ -6,5 +6,8 @@ module.exports = {
     '/node_modules/react-native-reanimated/plugin/',
     '/node_modules/@react-native/babel-preset/',
   ],
+  moduleNameMapper: {
+    '^@financeapp/ui$': '<rootDir>/../../packages/ui/src/index.ts',
+  },
   collectCoverageFrom: ['src/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
 };

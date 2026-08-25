@@ -52,6 +52,7 @@ export function EmptyState({
         {title}
       </Text>
       <Text
+        accessibilityLiveRegion="polite"
         style={[
           tokens.typography.body,
           styles.message,

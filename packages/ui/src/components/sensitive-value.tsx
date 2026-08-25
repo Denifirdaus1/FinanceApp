@@ -4,8 +4,7 @@ import { useTheme } from './theme-provider';
 
 export interface SensitiveValueProps {
   value: string;
-  hidden?: boolean;
-  hiddenValue?: string;
+  hidden: boolean;
   accessibilityLabel?: string;
   style?: StyleProp<TextStyle>;
   testID?: string;
@@ -13,14 +12,13 @@ export interface SensitiveValueProps {
 
 export function SensitiveValue({
   value,
-  hidden = false,
-  hiddenValue = '••••',
+  hidden,
   accessibilityLabel,
   style,
   testID,
 }: SensitiveValueProps) {
   const { tokens } = useTheme();
-  const displayedValue = hidden ? hiddenValue : value;
+  const displayedValue = hidden ? '••••' : value;
   const label = hidden
     ? (accessibilityLabel ?? 'Nominal disembunyikan')
     : (accessibilityLabel ?? value);

@@ -8,7 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { useReducedMotion, useTheme } from './theme-provider';
 
@@ -47,23 +47,31 @@ export function Button({
 }: ButtonProps) {
   const { tokens } = useTheme();
   const reducedMotion = useReducedMotion();
+  const [focused, setFocused] = useState(false);
   const isDisabled = disabled || loading;
-  const variantStyle = {
-    primary: { backgroundColor: tokens.colors.primary, borderColor: tokens.colors.primary },
-    secondary: {
-      backgroundColor: tokens.colors.surfaceMuted,
-      borderColor: tokens.colors.borderStrong,
-    },
-    tertiary: { backgroundColor: 'transparent', borderColor: 'transparent' },
-    destructive: { backgroundColor: tokens.colors.danger, borderColor: tokens.colors.danger },
-    icon: {
-      backgroundColor: 'transparent',
-      borderColor: 'transparent',
-      paddingHorizontal: tokens.spacing.space0,
-    },
-  }[variant];
-  const contentColor =
-    variant === 'primary' || variant === 'destructive'
+  const variantStyle = isDisabled
+    ? {
+        backgroundColor: variant === 'icon' ? 'transparent' : tokens.colors.disabled.surface,
+        borderColor: variant === 'icon' ? 'transparent' : tokens.colors.disabled.border,
+        paddingHorizontal: variant === 'icon' ? tokens.spacing.space0 : tokens.spacing.space4,
+      }
+    : {
+        primary: { backgroundColor: tokens.colors.primary, borderColor: tokens.colors.primary },
+        secondary: {
+          backgroundColor: tokens.colors.surfaceMuted,
+          borderColor: tokens.colors.borderStrong,
+        },
+        tertiary: { backgroundColor: 'transparent', borderColor: 'transparent' },
+        destructive: { backgroundColor: tokens.colors.danger, borderColor: tokens.colors.danger },
+        icon: {
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+          paddingHorizontal: tokens.spacing.space0,
+        },
+      }[variant];
+  const contentColor = isDisabled
+    ? tokens.colors.disabled.text
+    : variant === 'primary' || variant === 'destructive'
       ? tokens.colors.onPrimary
       : tokens.colors.primary;
 
@@ -74,6 +82,14 @@ export function Button({
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
+      onBlur={(event) => {
+        setFocused(false);
+        rest.onBlur?.(event);
+      }}
+      onFocus={(event) => {
+        setFocused(true);
+        rest.onFocus?.(event);
+      }}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
@@ -92,13 +108,17 @@ export function Button({
           width: tokens.interaction.minimumTouchTarget,
         },
         variantStyle,
+        focused &&
+          !isDisabled && {
+            borderColor: tokens.colors.info,
+            borderWidth: tokens.stroke.focus,
+          },
         pressed &&
           !isDisabled && {
             opacity: reducedMotion
               ? tokens.interaction.pressedReducedOpacity
               : tokens.interaction.pressedOpacity,
           },
-        isDisabled && { opacity: tokens.interaction.disabledOpacity },
         style,
       ]}
     >
@@ -112,12 +132,25 @@ export function Button({
         ]}
       >
         {loading ? (
-          <ActivityIndicator
-            accessible={false}
-            color={contentColor}
-            size="small"
-            style={{ marginRight: tokens.spacing.space1 }}
-          />
+          reducedMotion ? (
+            <View
+              accessible={false}
+              style={{
+                backgroundColor: contentColor,
+                borderRadius: tokens.radius.full,
+                height: tokens.icon.small,
+                marginRight: tokens.spacing.space1,
+                width: tokens.icon.small,
+              }}
+            />
+          ) : (
+            <ActivityIndicator
+              accessible={false}
+              color={contentColor}
+              size="small"
+              style={{ marginRight: tokens.spacing.space1 }}
+            />
+          )
         ) : (
           leadingIcon
         )}
@@ -129,7 +162,9 @@ export function Button({
           children
         ) : (
           (children ?? (
-            <Text style={[tokens.typography.label, { color: contentColor }]}>{label}</Text>
+            <Text style={[tokens.typography.label, styles.label, { color: contentColor }]}>
+              {label}
+            </Text>
           ))
         )}
         {!loading && trailingIcon}
@@ -146,6 +181,12 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexShrink: 1,
     justifyContent: 'center',
+    minWidth: 0,
+  },
+  label: {
+    flexShrink: 1,
+    textAlign: 'center',
   },
 });
