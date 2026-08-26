@@ -7,6 +7,7 @@ export default function CaptureScreen() {
       initialMode="quick_add"
       onBack={() => router.back()}
       onOpenReceipt={() => router.push('/receipt-capture')}
+      onOpenVoice={() => router.push('/voice-capture')}
     />
   );
 }

@@ -26,6 +26,7 @@ export default function AppLayout() {
       <Tabs.Screen name="planning/currency" options={{ href: null }} />
       <Tabs.Screen name="sync" options={{ href: null }} />
       <Tabs.Screen name="receipt-capture" options={{ href: null }} />
+      <Tabs.Screen name="voice-capture" options={{ href: null }} />
     </Tabs>
   );
 }

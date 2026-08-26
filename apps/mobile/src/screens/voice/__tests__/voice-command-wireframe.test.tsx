@@ -125,9 +125,39 @@ describe('U11 F08 voice command wireframe', () => {
       kind: 'needs_clarification',
       reason: 'entity_no_match',
     });
+    expect(parseIndonesianVoice('keluar seribu buat makan')).toMatchObject({
+      kind: 'parsed',
+      draft: { amountMinor: '1000' },
+    });
+    expect(parseIndonesianVoice('keluar 5 juta buat makan')).toMatchObject({
+      kind: 'parsed',
+      draft: { amountMinor: '5000000' },
+    });
+    expect(parseIndonesianVoice('keluar 2 miliar buat makan')).toMatchObject({
+      kind: 'parsed',
+      draft: { amountMinor: '2000000000' },
+    });
+    expect(parseIndonesianVoice('keluar tanpa nominal')).toMatchObject({
+      kind: 'parser_error',
+      reason: 'amount_missing',
+    });
     expect(validateVoiceDraft(validDraft)).toMatchObject({ ok: true, requiresReview: true });
     expect(validateVoiceDraft({ ...validDraft, amountMinor: '0' })).toMatchObject({ ok: false });
     expect(validateVoiceDraft({ ...validDraft, amountMinor: '1.5' })).toMatchObject({ ok: false });
+    expect(validateVoiceDraft({ ...validDraft, occurredAt: 'not-a-date' })).toMatchObject({
+      ok: false,
+      reason: 'date',
+    });
+    expect(
+      validateVoiceDraft({ ...validDraft, direction: 'other' as VoiceDraft['direction'] }),
+    ).toMatchObject({
+      ok: false,
+      reason: 'direction',
+    });
+    expect(validateVoiceDraft({ ...validDraft, accountId: undefined })).toMatchObject({
+      ok: false,
+      reason: 'entity',
+    });
   });
 
   it('keeps ambiguity and entity resolution explicit', () => {
@@ -157,6 +187,10 @@ describe('U11 F08 voice command wireframe', () => {
     });
     expect(createVoiceFixture().saveAlias(false)).toMatchObject({ kind: 'selection_required' });
     expect(createVoiceFixture().saveAlias(true)).toMatchObject({ kind: 'alias_fixture_saved' });
+    expect(createVoiceFixture().resolveEntities()).toMatchObject({
+      kind: 'resolved',
+      autoSelected: true,
+    });
   });
 
   it('requires explicit review and keeps confirmation offline/idempotent', () => {
@@ -188,6 +222,13 @@ describe('U11 F08 voice command wireframe', () => {
       kind: 'note_fixture',
       persisted: false,
     });
+    expect(createVoiceFixture('permission_revoked').confirm(validDraft, true)).toMatchObject({
+      kind: 'read_only',
+      draftRetained: true,
+    });
+    expect(createVoiceFixture('read_only').confirm(validDraft, true)).toMatchObject({
+      kind: 'read_only',
+    });
   });
 
   it('covers unavailable, permission, revoked, read-only, and kill-switch outcomes', () => {
@@ -212,6 +253,24 @@ describe('U11 F08 voice command wireframe', () => {
       route: '/capture',
       production: false,
     });
+    expect(createVoiceFixture('ready').checkCapability('en-US')).toMatchObject({
+      supported: false,
+      trueOnDevice: false,
+    });
+    expect(createVoiceFixture().requestPermission()).toMatchObject({ kind: 'granted' });
+    expect(createVoiceFixture('permission_denied').startListening()).toMatchObject({
+      kind: 'permission_denied',
+      audioStored: false,
+    });
+    expect(createVoiceFixture('on_device_unavailable').startListening()).toMatchObject({
+      kind: 'unavailable',
+      audioStored: false,
+    });
+    for (const scenario of ['partial', 'review', 'saving', 'cancelled'] as VoiceScenario[]) {
+      expect(createVoiceFixture(scenario).status().state).toBe(
+        scenario === 'partial' ? 'partial_transcript' : scenario,
+      );
+    }
   });
 
   it('renders states and live actions with accessibility, reduced motion, and narrow layout', () => {
@@ -262,6 +321,32 @@ describe('U11 F08 voice command wireframe', () => {
     expect(screen.getByText('Voice command (fixture)')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows capability, permission, interruption, retry, and validation recovery in the UI', () => {
+    const ready = renderVoice();
+    fireEvent.press(screen.getByRole('button', { name: 'Check capability' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Use manual entry' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Push to talk' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Simulate interruption' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel voice capture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Push to talk' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Retry silence' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Stop listening' }));
+    fireEvent.changeText(screen.getByLabelText('Amount minor unit'), 'not-an-integer');
+    fireEvent.press(screen.getByRole('button', { name: 'Confirm voice transaction' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+
+    ready.unmount();
+    const unavailable = renderVoice('on_device_unavailable');
+    fireEvent.press(screen.getByRole('button', { name: 'Push to talk' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    unavailable.unmount();
+    renderVoice('permission_required');
+    fireEvent.press(screen.getByRole('button', { name: 'Push to talk' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
   });
 
   it('does not use network/logging or expose transcript, amount, or entity data in navigation', () => {

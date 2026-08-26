@@ -26,6 +26,7 @@ export interface TransactionsWireframeProps {
   initialMode?: 'list' | 'quick_add';
   onBack?: () => void;
   onOpenReceipt?: () => void;
+  onOpenVoice?: () => void;
 }
 
 function createDraft(entryType: TransactionEntryType = 'expense'): TransactionDraft {
@@ -68,6 +69,7 @@ export function TransactionsWireframe({
   initialMode = 'list',
   onBack,
   onOpenReceipt,
+  onOpenVoice,
 }: TransactionsWireframeProps) {
   const { tokens, reducedMotion } = useTheme();
   const [fallbackFixture] = useState(() => createTransactionsFixture());
@@ -517,6 +519,14 @@ export function TransactionsWireframe({
             label="Scan receipt"
             variant="secondary"
             onPress={onOpenReceipt}
+            style={styles.action}
+          />
+        ) : null}
+        {onOpenVoice ? (
+          <Button
+            label="Input dengan suara"
+            variant="secondary"
+            onPress={onOpenVoice}
             style={styles.action}
           />
         ) : null}
