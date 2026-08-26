@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 
 import { Button, Card, Input } from '@financeapp/ui';
 
@@ -369,6 +370,13 @@ export function TransactionsWireframe({
           label="Tambah transaksi"
           onPress={openQuickAdd}
           accessibilityLabel="Tambah transaksi"
+          style={styles.action}
+        />
+        <Button
+          label="Operasi transfer & saldo"
+          variant="secondary"
+          onPress={() => router.push('/transfers')}
+          accessibilityLabel="Operasi transfer & saldo"
           style={styles.action}
         />
       </>
