@@ -24,6 +24,7 @@ export default function AppLayout() {
       <Tabs.Screen name="categories" options={{ href: null }} />
       <Tabs.Screen name="transfers" options={{ href: null }} />
       <Tabs.Screen name="planning/currency" options={{ href: null }} />
+      <Tabs.Screen name="sync" options={{ href: null }} />
     </Tabs>
   );
 }

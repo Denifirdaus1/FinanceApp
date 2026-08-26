@@ -1,3 +1,5 @@
+import { router } from 'expo-router';
+import { Button } from '@financeapp/ui';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '../../src/app/providers/theme-provider';
@@ -22,6 +24,7 @@ export default function AuthenticatedShellScreen() {
       >
         Ruang pribadi
       </Text>
+      <Button label="Open sync status" onPress={() => router.push('/sync')} />
     </View>
   );
 }

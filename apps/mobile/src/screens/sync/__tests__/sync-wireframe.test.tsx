@@ -23,7 +23,7 @@ function renderWireframe(scenario?: SyncScenario) {
 }
 
 describe('U09 F18 offline sync wireframe', () => {
-  it('connects F18 to the Home route manifest and authenticated Home entry', () => {
+  it('connects F18 to the Home route manifest and authenticated Home entry', async () => {
     expect(ROUTE_MANIFEST.find((entry) => entry.featureId === 'F18')).toMatchObject({
       path: '/sync',
       navigationGroup: 'home',
@@ -33,12 +33,14 @@ describe('U09 F18 offline sync wireframe', () => {
     });
     defaultSessionAdapter.setSignedIn();
     renderRouter('app', { initialUrl: '/' });
-    expect(routerScreen.getByRole('button', { name: 'Open sync status' })).toBeTruthy();
+    fireEvent.press(await routerScreen.findByRole('button', { name: 'Open sync status' }));
+    expect(await routerScreen.findByText('Sinkronisasi (fixture)')).toBeTruthy();
   });
 
   it('exposes every sync status and only safe pending metadata', () => {
     const scenarios: SyncScenario[] = [
       'ready',
+      'local_only',
       'loading',
       'empty',
       'offline',
@@ -52,18 +54,23 @@ describe('U09 F18 offline sync wireframe', () => {
     for (const scenario of scenarios) {
       const fixture = createSyncFixture(scenario);
       expect(fixture.status.state).toBeTruthy();
-      expect(fixture.safePendingMetadata()).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            entityType: expect.any(String),
-            status: expect.any(String),
-            retryState: expect.any(String),
-            attempts: expect.any(Number),
-            ageBucket: expect.any(String),
-          }),
-        ]),
-      );
-      const serialized = JSON.stringify(fixture.safePendingMetadata());
+      const safeMetadata = fixture.safePendingMetadata();
+      if (scenario === 'empty') {
+        expect(safeMetadata).toEqual([]);
+      } else {
+        expect(safeMetadata).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              entityType: expect.any(String),
+              status: expect.any(String),
+              retryState: expect.any(String),
+              attempts: expect.any(Number),
+              ageBucket: expect.any(String),
+            }),
+          ]),
+        );
+      }
+      const serialized = JSON.stringify(safeMetadata);
       expect(serialized).not.toMatch(/payload|merchant|amount|entityId|token|household|account/i);
     }
   });
@@ -77,7 +84,7 @@ describe('U09 F18 offline sync wireframe', () => {
     ['retry_429', 'retry_after'],
     ['retry_5xx', 'backoff'],
     ['non_retryable', 'review_required'],
-  ] as Array<[SyncScenario, RetryOutcome['kind']]>)(
+  ] as [SyncScenario, RetryOutcome['kind']][])(
     'classifies %s retry as %s with deterministic idempotency',
     (scenario, expected) => {
       const fixture = createSyncFixture(scenario);
@@ -134,12 +141,73 @@ describe('U09 F18 offline sync wireframe', () => {
     expect(screen.getByText(/retry-after/)).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Retry sync' }));
     expect(screen.getByRole('alert')).toBeTruthy();
-    expect(screen.getByText('Minimum width 320dp')).toBeTruthy();
+    expect(screen.getByText(/Minimum width 320dp/)).toBeTruthy();
 
     fireEvent.press(screen.getByRole('button', { name: 'Review conflicts' }));
     expect(screen.getByText('Conflict review (fixture)')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Use device version' }));
     expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
+  it('renders scenario-specific copy, reduced-motion paths, and back navigation', () => {
+    const copies: [SyncScenario, RegExp][] = [
+      ['empty', /Belum ada mutation/],
+      ['local_only', /Tersimpan di perangkat/],
+      ['loading', /Memuat status/],
+      ['offline', /Offline:/],
+      ['schema_incompatible', /Push diblokir/],
+      ['revoked', /Scope terkunci/],
+      ['kill_switch', /manual-only/],
+      ['manual_only', /manual-only/],
+      ['retry_401', /Sesi kedaluwarsa/],
+      ['retry_403', /Akses dicabut/],
+      ['retry_409', /Perlu diperiksa/],
+      ['critical_conflict', /Perlu diperiksa/],
+      ['needs_review', /Perlu diperiksa/],
+      ['retry_429', /retry-after/],
+      ['retry_5xx', /backoff/],
+      ['failed', /backoff/],
+      ['rollback', /Aggregate rollback/],
+      ['auto_merge', /Fixture aman/],
+      ['ready', /Fixture aman/],
+    ];
+    for (const [scenario, copy] of copies) {
+      const rendered = renderWireframe(scenario);
+      expect(screen.getAllByText(copy).length).toBeGreaterThan(0);
+      rendered.unmount();
+    }
+
+    const back = jest.fn();
+    render(
+      <ThemeProvider>
+        <SyncWireframe fixture={createSyncFixture()} onBack={back} />
+      </ThemeProvider>,
+    );
+    fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(back).toHaveBeenCalledTimes(1);
+    screen.unmount();
+
+    renderWireframe('schema_incompatible');
+    fireEvent.press(screen.getByRole('button', { name: 'Update app fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Export safe diagnostic' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    screen.unmount();
+
+    renderWireframe('revoked');
+    fireEvent.press(screen.getByRole('button', { name: 'Purge after re-auth' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    screen.unmount();
+
+    renderWireframe('manual_only');
+    fireEvent.press(screen.getByRole('button', { name: 'Open manual sync guide' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    screen.unmount();
+
+    renderWireframe('auto_merge');
+    fireEvent.press(screen.getByRole('button', { name: 'Review conflicts' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Back to sync hub' }));
+    expect(screen.getByText('Sinkronisasi (fixture)')).toBeTruthy();
+    screen.unmount();
   });
 
   it('shows schema, revoked, and manual-only actions without network or logging', () => {
