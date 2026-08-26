@@ -25,6 +25,7 @@ export interface TransactionsWireframeProps {
   fixture?: TransactionsFixture;
   initialMode?: 'list' | 'quick_add';
   onBack?: () => void;
+  onOpenReceipt?: () => void;
 }
 
 function createDraft(entryType: TransactionEntryType = 'expense'): TransactionDraft {
@@ -66,6 +67,7 @@ export function TransactionsWireframe({
   fixture: suppliedFixture,
   initialMode = 'list',
   onBack,
+  onOpenReceipt,
 }: TransactionsWireframeProps) {
   const { tokens, reducedMotion } = useTheme();
   const [fallbackFixture] = useState(() => createTransactionsFixture());
@@ -509,6 +511,14 @@ export function TransactionsWireframe({
           <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
             {notice}
           </Text>
+        ) : null}
+        {onOpenReceipt ? (
+          <Button
+            label="Scan receipt"
+            variant="secondary"
+            onPress={onOpenReceipt}
+            style={styles.action}
+          />
         ) : null}
         <Button label="Lanjut ke review" onPress={validateAndReview} style={styles.action} />
       </>

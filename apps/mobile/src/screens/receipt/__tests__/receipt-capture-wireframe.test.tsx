@@ -40,7 +40,7 @@ const validDraft: ReceiptDraft = {
 };
 
 describe('U10 F07 receipt capture and OCR wireframe', () => {
-  it('connects F07 route and receipt handoff without changing the global capture contract', () => {
+  it('connects F07 route and receipt handoff without changing the global capture contract', async () => {
     expect(ROUTE_MANIFEST.find((entry) => entry.featureId === 'F07')).toMatchObject({
       routeId: 'receipt-capture',
       path: '/receipt-capture',
@@ -50,7 +50,7 @@ describe('U10 F07 receipt capture and OCR wireframe', () => {
     expect(RECEIPT_LAYOUT).toMatchObject({ minimumWidth: 320, minimumTouchTarget: 48 });
     defaultSessionAdapter.setSignedIn();
     renderRouter('app', { initialUrl: '/receipt-capture' });
-    expect(routerScreen.getByText('Receipt capture (fixture)')).toBeTruthy();
+    expect(await routerScreen.findByText('Receipt capture (fixture)')).toBeTruthy();
   });
 
   it('supports camera/gallery/PDF source choices and just-in-time permission fallback', () => {
@@ -262,5 +262,59 @@ describe('U10 F07 receipt capture and OCR wireframe', () => {
     expect(logSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
     logSpy.mockRestore();
+  });
+
+  it('exercises preprocess, correction, confirmation, and back actions', () => {
+    const onBack = jest.fn();
+    render(
+      <ThemeProvider reducedMotion={false}>
+        <ReceiptCaptureWireframe onBack={onBack} />
+      </ThemeProvider>,
+    );
+    fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+    fireEvent.press(screen.getByRole('button', { name: 'Choose camera' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Continue to preprocess' }));
+    for (const label of ['Crop', 'Rotate', 'Perspective', 'Contrast', 'Run recognizing']) {
+      fireEvent.press(screen.getByRole('button', { name: label }));
+    }
+    fireEvent.press(screen.getByRole('button', { name: 'Continue to review' }));
+    fireEvent.changeText(screen.getByLabelText('Merchant'), 'Fixture merchant');
+    fireEvent.changeText(screen.getByLabelText('Total minor unit'), '125000');
+    fireEvent.press(screen.getByRole('button', { name: 'Simpan gambar struk: OFF' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Confirm receipt transaction' }));
+    expect(screen.getByText('Receipt detail (fixture)')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Open receipt detail' })).toBeTruthy();
+  });
+
+  it('exercises upload retry action in the detail view', () => {
+    renderWireframe('upload_pending');
+    fireEvent.press(screen.getByRole('button', { name: 'Choose camera' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Continue to preprocess' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Continue to review' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Simpan gambar struk: OFF' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Confirm receipt transaction' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Retry image upload' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
+  it('exercises relink action for a missing receipt object', () => {
+    renderWireframe('missing_object');
+    fireEvent.press(screen.getByRole('button', { name: 'Choose camera' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Continue to preprocess' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Continue to review' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Confirm receipt transaction' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Relink receipt' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
+  it('exercises read-only attachment recovery action', () => {
+    renderWireframe('read_only');
+    fireEvent.press(screen.getByRole('button', { name: 'Choose camera' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Continue to preprocess' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Continue to review' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Confirm receipt transaction' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Delete receipt image' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
   });
 });
