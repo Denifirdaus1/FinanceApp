@@ -198,7 +198,10 @@ export function AccountsWireframe({ fixture: suppliedFixture, onBack }: Accounts
   }, [fixture]);
 
   useEffect(() => {
-    void loadAccounts();
+    const timer = setTimeout(() => {
+      void loadAccounts();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [loadAccounts]);
 
   const openAccount = (account: Account) => {

@@ -304,8 +304,8 @@ export function validateAccountDraft(
   input: AccountDraft,
 ):
   | { valid: true }
-  | { valid: false; fields: Array<'name' | 'currency' | 'lastFour' | 'openingBalance'> } {
-  const fields: Array<'name' | 'currency' | 'lastFour' | 'openingBalance'> = [];
+  | { valid: false; fields: ('name' | 'currency' | 'lastFour' | 'openingBalance')[] } {
+  const fields: ('name' | 'currency' | 'lastFour' | 'openingBalance')[] = [];
   if (input.name.trim().length === 0 || input.name.trim().length > 80) fields.push('name');
   if (!/^[A-Z]{3}$/.test(input.currency) || !isSupportedCurrency(input.currency)) {
     fields.push('currency');
