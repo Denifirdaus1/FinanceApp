@@ -1,10 +1,21 @@
+import { router } from 'expo-router';
+import { Button } from '@financeapp/ui';
+import { StyleSheet, View } from 'react-native';
+
 import { NavigationPlaceholder } from '../../src/screens/navigation-placeholder';
 
 export default function PlanningScreen() {
   return (
-    <NavigationPlaceholder
-      title="Planning"
-      description="Navigation foundation siap. Detail planning akan hadir pada task fitur terkait."
-    />
+    <View style={styles.container}>
+      <NavigationPlaceholder
+        title="Planning"
+        description="Planning fixture siap untuk pengaturan multi-currency."
+      />
+      <Button label="Open multi-currency" onPress={() => router.push('/planning/currency')} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+});

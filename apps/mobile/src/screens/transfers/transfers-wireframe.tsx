@@ -21,6 +21,7 @@ type TransfersView = 'hub' | 'transfer' | 'transfer-review' | 'split' | 'adjustm
 export interface TransfersWireframeProps {
   fixture?: TransfersFixture;
   onBack?: () => void;
+  onOpenCurrency?: () => void;
 }
 
 function stateLabel(state: OperationState): string {
@@ -50,7 +51,11 @@ function stateLabel(state: OperationState): string {
   }
 }
 
-export function TransfersWireframe({ fixture: suppliedFixture, onBack }: TransfersWireframeProps) {
+export function TransfersWireframe({
+  fixture: suppliedFixture,
+  onBack,
+  onOpenCurrency,
+}: TransfersWireframeProps) {
   const { tokens, reducedMotion } = useTheme();
   const [fallbackFixture] = useState(() => createTransfersFixture());
   const fixture = suppliedFixture ?? fallbackFixture;
@@ -147,6 +152,9 @@ export function TransfersWireframe({ fixture: suppliedFixture, onBack }: Transfe
           {stateLabel(fixture.initialResult.state)}
         </Text>
         <Button label="Transfer" onPress={() => setView('transfer')} />
+        {onOpenCurrency ? (
+          <Button label="Cross-currency transfer" variant="secondary" onPress={onOpenCurrency} />
+        ) : null}
         <Button label="Split transaksi" onPress={() => setView('split')} />
         <Button label="Penyesuaian saldo" onPress={() => setView('adjustment')} />
         <Button label="Riwayat koreksi" variant="secondary" onPress={() => setView('history')} />
