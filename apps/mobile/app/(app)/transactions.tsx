@@ -1,10 +1,5 @@
-import { NavigationPlaceholder } from '../../src/screens/navigation-placeholder';
+import { TransactionsWireframe } from '../../src/screens/transactions/transactions-wireframe';
 
 export default function TransactionsScreen() {
-  return (
-    <NavigationPlaceholder
-      title="Transactions"
-      description="Navigation foundation siap. Detail transaksi akan hadir pada task fitur terkait."
-    />
-  );
+  return <TransactionsWireframe />;
 }
