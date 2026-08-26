@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { renderRouter, screen as routerScreen } from 'expo-router/testing-library';
 
 import { ThemeProvider } from '../../../app/providers/theme-provider';
@@ -115,12 +115,12 @@ describe('U04 F03 accounts, wallets, assets, and liabilities wireframe', () => {
   });
 
   it('renders syncing and partial-currency list states without inventing a total', async () => {
-    renderAccounts({ loadOutcomes: ['syncing'] });
+    const syncingRender = renderAccounts({ loadOutcomes: ['syncing'] });
     expect(await screen.findByText('Menyinkronkan akun fixture')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Lihat akun lokal' }));
     expect(await screen.findByText('Akun & aset')).toBeTruthy();
 
-    cleanup();
+    syncingRender.unmount();
     renderAccounts({ loadOutcomes: ['partial_currency'] });
     expect(await screen.findByText('Kurs belum lengkap')).toBeTruthy();
     expect(screen.getByText('Total belum lengkap')).toBeTruthy();
@@ -168,7 +168,7 @@ describe('U04 F03 accounts, wallets, assets, and liabilities wireframe', () => {
   });
 
   it('supports archive confirmation cancel, dependency-blocked review, success, and restore', async () => {
-    renderAccounts({ archiveOutcomes: ['success'] });
+    const successRender = renderAccounts({ archiveOutcomes: ['success'] });
     await openFirstAccount();
     fireEvent.press(screen.getByRole('button', { name: 'Arsipkan akun' }));
     expect(screen.getByTestId('account-archive-dialog')).toBeTruthy();
@@ -180,7 +180,7 @@ describe('U04 F03 accounts, wallets, assets, and liabilities wireframe', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Pulihkan akun' }));
     expect(await screen.findByText('Akun dipulihkan (fixture)')).toBeTruthy();
 
-    cleanup();
+    successRender.unmount();
     renderAccounts({ archiveOutcomes: ['dependency-blocked'] });
     await openFirstAccount();
     fireEvent.press(screen.getByRole('button', { name: 'Arsipkan akun' }));
@@ -256,7 +256,7 @@ describe('U04 F03 accounts, wallets, assets, and liabilities wireframe', () => {
     expect(screen.getByTestId('accounts-reduced-motion-indicator')).toBeTruthy();
     const actions = screen.getAllByRole('button');
     expect(actions.length).toBeGreaterThan(0);
-    expect(actions[0].props.accessibilityLabel).toBeTruthy();
+    expect(actions[0]?.props.accessibilityLabel).toBeTruthy();
     expect(ACCOUNT_LAYOUT.minimumWidth).toBe(320);
     expect(ACCOUNT_LAYOUT.minimumTouchTarget).toBeGreaterThanOrEqual(48);
     expect(ACCOUNT_LAYOUT.contentMaxWidth).toBeGreaterThanOrEqual(320);
@@ -274,5 +274,47 @@ describe('U04 F03 accounts, wallets, assets, and liabilities wireframe', () => {
     expect(onBack).toHaveBeenCalledTimes(1);
     expect(createAccountsFixture().snapshot()).toEqual(DEFAULT_ACCOUNT_FIXTURES);
     await waitFor(() => expect(screen.getByTestId('accounts-scroll')).toBeTruthy());
+  });
+
+  it('covers local-only, save error, archive error, missing restore, and unsupported valuation fixtures', async () => {
+    const draft = {
+      type: 'cash' as const,
+      balanceKind: 'asset' as const,
+      trackingMode: 'transactional' as const,
+      name: 'Boundary fixture',
+      institutionLabel: 'Fixture',
+      currency: 'IDR' as const,
+      lastFour: '',
+      openingBalanceMajor: '0',
+      openingBalanceAt: '2026-08-26',
+      includeInNetWorth: true,
+      accessMode: 'personal' as const,
+    };
+    expect((await createAccountsFixture({ saveOutcomes: ['local_only'] }).save(draft)).kind).toBe(
+      'local_only',
+    );
+    expect((await createAccountsFixture({ saveOutcomes: ['error'] }).save(draft)).kind).toBe(
+      'error',
+    );
+    expect(
+      (
+        await createAccountsFixture({
+          initialAccounts: [DEFAULT_ACCOUNT_FIXTURES[0] as Account],
+          archiveOutcomes: ['error'],
+        }).archive(DEFAULT_ACCOUNT_FIXTURES[0]?.id ?? '')
+      ).kind,
+    ).toBe('error');
+    expect(await createAccountsFixture().restore('missing-fixture')).toBeUndefined();
+    expect(
+      await createAccountsFixture().addValuation('account-cash-fixture', '10', '2026-08-26'),
+    ).toBeUndefined();
+    expect(calculateNetWorth([])).toMatchObject({ byCurrency: [], incomplete: false });
+
+    render(
+      <ThemeProvider>
+        <AccountsWireframe />
+      </ThemeProvider>,
+    );
+    expect(await screen.findByText('Akun & aset')).toBeTruthy();
   });
 });

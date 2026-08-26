@@ -36,6 +36,12 @@ export default function ProfileScreen() {
         style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}
         variant="secondary"
       />
+      <Button
+        label="Open accounts"
+        onPress={() => router.push('/accounts')}
+        style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}
+        variant="secondary"
+      />
     </View>
   );
 }

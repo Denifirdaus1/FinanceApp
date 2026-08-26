@@ -32,6 +32,9 @@ importers:
       '@financeapp/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@financeapp/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@financeapp/sync':
         specifier: workspace:*
         version: link:../../packages/sync
