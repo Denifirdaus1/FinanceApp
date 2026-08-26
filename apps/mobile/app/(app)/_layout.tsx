@@ -21,6 +21,7 @@ export default function AppLayout() {
       <Tabs.Screen name="capture" options={{ href: null }} />
       <Tabs.Screen name="screen-catalog" options={{ href: null }} />
       <Tabs.Screen name="accounts" options={{ href: null }} />
+      <Tabs.Screen name="categories" options={{ href: null }} />
     </Tabs>
   );
 }

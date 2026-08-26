@@ -42,6 +42,12 @@ export default function ProfileScreen() {
         style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}
         variant="secondary"
       />
+      <Button
+        label="Open categories"
+        onPress={() => router.push('/categories')}
+        style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}
+        variant="secondary"
+      />
     </View>
   );
 }
