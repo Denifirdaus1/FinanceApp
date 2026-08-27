@@ -1,10 +1,7 @@
-import { NavigationPlaceholder } from '../../src/screens/navigation-placeholder';
+import { router } from 'expo-router';
+
+import { ReportsWireframe } from '../../src/screens/reports/reports-wireframe';
 
 export default function ReportsScreen() {
-  return (
-    <NavigationPlaceholder
-      title="Reports"
-      description="Navigation foundation siap. Detail laporan akan hadir pada task fitur terkait."
-    />
-  );
+  return <ReportsWireframe onDrillDown={(route) => router.push(route)} />;
 }
