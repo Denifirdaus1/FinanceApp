@@ -27,6 +27,7 @@ export default function AppLayout() {
       <Tabs.Screen name="planning/budgets" options={{ href: null }} />
       <Tabs.Screen name="planning/goals" options={{ href: null }} />
       <Tabs.Screen name="planning/recurring" options={{ href: null }} />
+      <Tabs.Screen name="planning/debts" options={{ href: null }} />
       <Tabs.Screen name="sync" options={{ href: null }} />
       <Tabs.Screen name="receipt-capture" options={{ href: null }} />
       <Tabs.Screen name="voice-capture" options={{ href: null }} />
