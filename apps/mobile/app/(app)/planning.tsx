@@ -14,6 +14,7 @@ export default function PlanningScreen() {
       <Button label="Open multi-currency" onPress={() => router.push('/planning/currency')} />
       <Button label="Open budgets" onPress={() => router.push('/planning/budgets')} />
       <Button label="Open goals" onPress={() => router.push('/planning/goals')} />
+      <Button label="Open recurring" onPress={() => router.push('/planning/recurring')} />
     </View>
   );
 }

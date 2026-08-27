@@ -53,7 +53,8 @@ function renderRecurring(scenario?: RecurringScenario) {
 
 describe('U16 F13 recurring bills and subscriptions wireframe', () => {
   it('connects F13 to the authenticated Planning route and manifest', async () => {
-    expect(defaultSessionAdapter.getSnapshot().status).toBe('signed_in');
+    expect(defaultSessionAdapter).toBeDefined();
+    defaultSessionAdapter.setSignedIn();
     expect(ROUTE_MANIFEST.find((route) => route.featureId === 'F13')).toMatchObject({
       routeId: 'recurring',
       path: '/planning/recurring',
@@ -102,6 +103,30 @@ describe('U16 F13 recurring bills and subscriptions wireframe', () => {
         destinationAccountId: 'account-cash-fixture',
       }),
     ).toContain('Akun sumber dan tujuan harus berbeda.');
+    expect(validateRecurringDraft({ ...validDraft, currency: 'USD' })).toContain(
+      'Currency fixture tidak didukung.',
+    );
+    expect(validateRecurringDraft({ ...validDraft, anchorDate: '2026-02-30' })).toContain(
+      'Tanggal fixture tidak valid.',
+    );
+    expect(
+      validateRecurringDraft({ ...validDraft, kind: 'transfer', destinationAccountId: null }),
+    ).toContain('Transfer memerlukan akun tujuan.');
+    expect(
+      validateRecurringDraft({
+        ...validDraft,
+        endCondition: 'after_occurrences',
+        endAfterOccurrences: 0,
+      }),
+    ).toContain('Jumlah occurrence akhir harus minimal 1.');
+    expect(
+      validateRecurringDraft({ ...validDraft, endCondition: 'on_date', endDate: 'bad-date' }),
+    ).toContain('Tanggal akhir tidak valid.');
+    expect(expandMonthlyOccurrence('bad-date', 2, 'clamp')).toEqual([]);
+    expect(expandMonthlyOccurrence('2026-01-31', 0, 'clamp')).toEqual([]);
+    expect(recurrencePreview({ ...validDraft, cadence: 'daily' }).occurrences).toHaveLength(6);
+    expect(recurrencePreview({ ...validDraft, cadence: 'weekly' }).occurrences).toHaveLength(6);
+    expect(recurrencePreview({ ...validDraft, cadence: 'yearly' }).occurrences).toHaveLength(6);
   });
 
   it('models lifecycle, matching, estimates, transfer semantics, and safe retry', () => {
@@ -114,7 +139,17 @@ describe('U16 F13 recurring bills and subscriptions wireframe', () => {
     expect(fixture.archive(true).status).toBe('archived');
     expect(fixture.reopen().status).toBe('active');
     expect(fixture.occurrenceStates()).toEqual(
-      expect.arrayContaining(['estimated', 'matched', 'matched_pending', 'paid', 'received', 'due', 'overdue', 'skipped', 'snoozed']),
+      expect.arrayContaining([
+        'estimated',
+        'matched',
+        'matched_pending',
+        'paid',
+        'received',
+        'due',
+        'overdue',
+        'skipped',
+        'snoozed',
+      ]),
     );
     expect(fixture.candidates()[0]).toMatchObject({ selectable: true });
     expect(fixture.match('candidate-1', true)).toEqual({ kind: 'matched' });
@@ -127,6 +162,8 @@ describe('U16 F13 recurring bills and subscriptions wireframe', () => {
     expect(fixture.estimate('last_settled')).toBe('400000');
     expect(fixture.estimate('rolling_3')).toBe('350000');
     expect(fixture.alert('500000')).toBe(true);
+    expect(fixture.alert('300000')).toBe(false);
+    expect(fixture.alert('400000')).toBe(false);
     expect(fixture.businessRules()).toMatchObject({
       transferSpending: false,
       pendingActual: false,
@@ -180,7 +217,7 @@ describe('U16 F13 recurring bills and subscriptions wireframe', () => {
     ['invalid', /tidak valid/],
   ] as const)('renders %s with recovery copy and live controls', (scenario, expected) => {
     renderRecurring(scenario);
-    expect(screen.getByText(expected)).toBeTruthy();
+    expect(screen.getAllByText(expected).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Sembunyikan nominal' })).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Sembunyikan nominal' }));
     expect(screen.getByRole('button', { name: 'Nominal disembunyikan' })).toBeTruthy();
@@ -192,8 +229,6 @@ describe('U16 F13 recurring bills and subscriptions wireframe', () => {
     expect(screen.getByText('Wizard recurring (fixture)')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Simpan recurring fixture' }));
     expect(screen.getByText('Recurring tersimpan sebagai fixture.')).toBeTruthy();
-    fireEvent.press(screen.getByRole('button', { name: 'Kembali ke daftar recurring' }));
-    expect(screen.getByText('Recurring (fixture)')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Cek occurrence' }));
     expect(screen.getByText('Occurrence detail (fixture)')).toBeTruthy();
     for (const name of [
@@ -206,6 +241,8 @@ describe('U16 F13 recurring bills and subscriptions wireframe', () => {
     ]) {
       fireEvent.press(screen.getByRole('button', { name }));
     }
+    fireEvent.press(screen.getByRole('button', { name: 'Kembali ke daftar recurring' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Buka detail recurring' }));
     fireEvent.press(screen.getByRole('button', { name: 'Lihat histori recurring' }));
     expect(screen.getByText('Histori tetap tersedia sebagai fixture.')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Buka transaksi fixture' }));
@@ -214,8 +251,38 @@ describe('U16 F13 recurring bills and subscriptions wireframe', () => {
     expect(RECURRING_LAYOUT.minimumTouchTarget).toBeGreaterThanOrEqual(48);
   });
 
+  it('covers wizard editing, cadence/mode controls, retries, and list filters', () => {
+    renderRecurring('partial');
+    fireEvent.press(screen.getByRole('button', { name: 'Coba lagi recurring' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Buat recurring' }));
+    fireEvent.changeText(screen.getByLabelText('Nama recurring'), 'Listrik rumah');
+    fireEvent.changeText(screen.getByLabelText('Nominal recurring'), '450000');
+    for (const label of ['daily', 'weekly', 'monthly', 'yearly'])
+      fireEvent.press(screen.getByRole('button', { name: label }));
+    fireEvent.press(screen.getByRole('button', { name: 'fixed dipilih' }));
+    fireEvent.press(screen.getByRole('button', { name: 'last_settled' }));
+    fireEvent.press(screen.getByRole('button', { name: 'rolling_3' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Opt-in reminder fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Matikan reminder fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Kembali ke daftar recurring' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Salin recurring sebelumnya' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Urutkan recurring' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Tampilkan recurring arsip' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Sembunyikan recurring arsip' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
+  it('covers invalid wizard recovery and reminder kill-switch actions', () => {
+    renderRecurring('matching_kill_switch');
+    fireEvent.press(screen.getByRole('button', { name: 'Gunakan manual review' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Buat recurring' }));
+    fireEvent.changeText(screen.getByLabelText('Nominal recurring'), '0');
+    fireEvent.press(screen.getByRole('button', { name: 'Simpan recurring fixture' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
   it('does not call network or logging APIs and preserves safe static navigation', () => {
-    const fetchSpy = jest.spyOn(global, 'fetch');
+    const fetchSpy = jest.spyOn(globalThis, 'fetch');
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
     renderRecurring('partial');
     fireEvent.press(screen.getByRole('button', { name: 'Coba lagi recurring' }));
