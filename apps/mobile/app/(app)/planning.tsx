@@ -12,6 +12,7 @@ export default function PlanningScreen() {
         description="Planning fixture siap untuk pengaturan multi-currency."
       />
       <Button label="Open multi-currency" onPress={() => router.push('/planning/currency')} />
+      <Button label="Open budgets" onPress={() => router.push('/planning/budgets')} />
     </View>
   );
 }

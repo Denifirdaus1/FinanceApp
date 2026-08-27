@@ -69,7 +69,10 @@ describe('U14 F11 budgets wireframe', () => {
     expect(fixture.filterStatus('archived').items).toEqual(
       expect.arrayContaining([expect.objectContaining({ status: 'archived' })]),
     );
-    expect(fixture.copyPrevious()).toMatchObject({ kind: 'copied', name: expect.stringContaining('(salinan)') });
+    expect(fixture.copyPrevious()).toMatchObject({
+      kind: 'copied',
+      name: expect.stringContaining('(salinan)'),
+    });
     expect(fixture.pause('budget-monthly')).toMatchObject({ kind: 'paused' });
     expect(fixture.archive('budget-monthly', true)).toMatchObject({ kind: 'archived' });
     expect(fixture.restore('budget-monthly')).toMatchObject({ kind: 'restored' });
@@ -86,9 +89,9 @@ describe('U14 F11 budgets wireframe', () => {
     expect(validateBudgetDraft({ ...validDraft, cadence: 'custom_days', startDay: 0 })).toEqual(
       expect.arrayContaining([expect.stringContaining('awal')]),
     );
-    expect(validateBudgetDraft({ ...validDraft, threshold: { kind: 'custom', percent: 101 } })).toEqual(
-      expect.arrayContaining([expect.stringContaining('threshold')]),
-    );
+    expect(
+      validateBudgetDraft({ ...validDraft, threshold: { kind: 'custom', percent: 101 } }),
+    ).toEqual(expect.arrayContaining([expect.stringContaining('threshold')]));
     expect(createBudgetsFixture().preview(validDraft)).toMatchObject({
       firstPeriod: expect.any(String),
       rolloverSimulation: expect.any(String),
@@ -100,13 +103,22 @@ describe('U14 F11 budgets wireframe', () => {
   });
 
   it('rejects overlapping categories and requires atomic zero-sum line adjustments', () => {
-    expect(validateBudgetDraft({
-      ...validDraft,
-      categoryLines: [...validDraft.categoryLines, { categoryId: 'category-food', plannedMinor: '200000' }],
-    })).toEqual(expect.arrayContaining([expect.stringContaining('ganda')]));
+    expect(
+      validateBudgetDraft({
+        ...validDraft,
+        categoryLines: [
+          ...validDraft.categoryLines,
+          { categoryId: 'category-food', plannedMinor: '200000' },
+        ],
+      }),
+    ).toEqual(expect.arrayContaining([expect.stringContaining('ganda')]));
     const fixture = createBudgetsFixture();
-    expect(fixture.moveAllocation('category-food', 'category-transport', '100000', '100000')).toMatchObject({ kind: 'applied', zeroSum: true });
-    expect(fixture.moveAllocation('category-food', 'category-transport', '100000', '90000')).toMatchObject({ kind: 'invalid', zeroSum: false });
+    expect(
+      fixture.moveAllocation('category-food', 'category-transport', '100000', '100000'),
+    ).toMatchObject({ kind: 'applied', zeroSum: true });
+    expect(
+      fixture.moveAllocation('category-food', 'category-transport', '100000', '90000'),
+    ).toMatchObject({ kind: 'invalid', zeroSum: false });
   });
 
   it('computes planned, actual, committed, forecast, available, projected, overspent, and usage with BigInt', () => {
@@ -129,7 +141,16 @@ describe('U14 F11 budgets wireframe', () => {
       overspentMinor: '0',
       usagePercent: '69',
     });
-    expect(calculateBudgetLine({ baseAllocationMinor: '0', adjustmentMinor: '0', rolloverMinor: '0', actualSpentMinor: '1', committedMinor: '0', forecastMinor: '0' }).usagePercent).toBeNull();
+    expect(
+      calculateBudgetLine({
+        baseAllocationMinor: '0',
+        adjustmentMinor: '0',
+        rolloverMinor: '0',
+        actualSpentMinor: '1',
+        committedMinor: '0',
+        forecastMinor: '0',
+      }).usagePercent,
+    ).toBeNull();
     expect(formatBudgetMoney('125000', 'IDR')).toContain('Rp');
     expect(formatBudgetMoney('125000.5', 'IDR')).toBeNull();
   });
@@ -144,23 +165,38 @@ describe('U14 F11 budgets wireframe', () => {
       missingFxCount: 1,
       missingFxFallback: false,
     });
-    expect(validateBudgetDraft({ ...validDraft, categoryLines: [{ categoryId: 'category-food', plannedMinor: '-1' }] })).toEqual(
-      expect.arrayContaining([expect.stringContaining('positif')]),
-    );
+    expect(
+      validateBudgetDraft({
+        ...validDraft,
+        categoryLines: [{ categoryId: 'category-food', plannedMinor: '-1' }],
+      }),
+    ).toEqual(expect.arrayContaining([expect.stringContaining('positif')]));
   });
 
   it('deduplicates thresholds and exposes rollover maintenance honestly', () => {
     const fixture = createBudgetsFixture('populated');
     expect(fixture.alert('budget-monthly', 80)).toMatchObject({ kind: 'alerted' });
     expect(fixture.alert('budget-monthly', 80)).toMatchObject({ kind: 'deduped' });
-    expect(createBudgetsFixture('rollover_maintenance').rolloverStatus()).toMatchObject({ kind: 'maintenance' });
+    expect(createBudgetsFixture('rollover_maintenance').rolloverStatus()).toMatchObject({
+      kind: 'maintenance',
+    });
   });
 
   it('keeps offline/conflict/permission/archived/too-many-lines states deterministic', () => {
-    expect(createBudgetsFixture('offline').save(validDraft)).toMatchObject({ kind: 'queued', syncStatus: 'queued' });
-    expect(createBudgetsFixture('conflict').save(validDraft)).toMatchObject({ kind: 'conflict_copy', name: expect.stringContaining('(salinan)') });
-    expect(createBudgetsFixture('permission_revoked').readOnly()).toMatchObject({ kind: 'read_only' });
-    expect(createBudgetsFixture('too_many_lines').validation()).toMatchObject({ kind: 'too_many_lines' });
+    expect(createBudgetsFixture('offline').save(validDraft)).toMatchObject({
+      kind: 'queued',
+      syncStatus: 'queued',
+    });
+    expect(createBudgetsFixture('conflict').save(validDraft)).toMatchObject({
+      kind: 'conflict_copy',
+      name: expect.stringContaining('(salinan)'),
+    });
+    expect(createBudgetsFixture('permission_revoked').readOnly()).toMatchObject({
+      kind: 'read_only',
+    });
+    expect(createBudgetsFixture('too_many_lines').validation()).toMatchObject({
+      kind: 'too_many_lines',
+    });
     expect(createBudgetsFixture('stale').recompute()).toMatchObject({ kind: 'preview_only' });
   });
 
@@ -171,7 +207,9 @@ describe('U14 F11 budgets wireframe', () => {
       formula: expect.stringContaining('available'),
       transactionRoute: '/transactions',
     });
-    expect(JSON.stringify(fixture.detail('budget-monthly'))).not.toMatch(/budget|category|accountId|transactionId|2026-08-27|amount/i);
+    expect(JSON.stringify(fixture.detail('budget-monthly'))).not.toMatch(
+      /budget|category|accountId|transactionId|2026-08-27|amount/i,
+    );
   });
 
   it('renders states, privacy masking, accessible controls, and no dead actions', () => {
@@ -216,5 +254,64 @@ describe('U14 F11 budgets wireframe', () => {
     expect(logSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
     logSpy.mockRestore();
+  });
+
+  it('covers validation fallbacks, rollover modes, and deterministic recovery results', () => {
+    expect(rolloverAmount('25', 'none')).toBe('0');
+    expect(rolloverAmount('25', 'positive-capped')).toBe('25');
+    expect(rolloverAmount('25', 'positive-capped', 'bad')).toBe('25');
+    expect(rolloverAmount('bad', 'positive-only')).toBe('0');
+    expect(
+      validateBudgetDraft({ ...validDraft, timezone: 'UTC', anchorDate: 'tomorrow', startDay: 32 }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Timezone'),
+        expect.stringContaining('Tanggal'),
+        expect.stringContaining('awal'),
+      ]),
+    );
+    expect(validateBudgetDraft({ ...validDraft, cadence: 'weekly', startDay: 8 })).toEqual(
+      expect.arrayContaining([expect.stringContaining('1–7')]),
+    );
+    expect(
+      validateBudgetDraft({
+        ...validDraft,
+        rolloverMode: 'positive-capped',
+        rolloverCapMinor: null,
+      }),
+    ).toEqual(expect.arrayContaining([expect.stringContaining('Batas rollover')]));
+    expect(
+      createBudgetsFixture().save({
+        ...validDraft,
+        categoryLines: [{ categoryId: 'category-food', plannedMinor: '0' }],
+      }),
+    ).toMatchObject({ kind: 'invalid' });
+    expect(createBudgetsFixture().archive('budget-monthly', false)).toMatchObject({
+      kind: 'cancelled',
+    });
+    expect(createBudgetsFixture().rolloverStatus()).toMatchObject({ kind: 'ready' });
+    const fixture = createBudgetsFixture();
+    expect(fixture.alert('line', 80).kind).toBe('alerted');
+    expect(fixture.alert('line', 80).kind).toBe('deduped');
+    expect(fixture.readOnly()).toMatchObject({ kind: 'read_only' });
+    expect(fixture.recompute()).toMatchObject({ kind: 'preview_only' });
+  });
+
+  it('covers wizard, detail, scenario switching, and recovery actions', () => {
+    renderBudgets('populated');
+    fireEvent.press(screen.getByRole('button', { name: 'Buka detail budget' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Lihat transaksi fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Kembali ke daftar budget' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Buat budget' }));
+    fireEvent.changeText(screen.getByDisplayValue('Budget baru'), 'Budget fixture');
+    fireEvent.press(screen.getByRole('button', { name: 'Mingguan' }));
+    fireEvent.press(screen.getByRole('button', { name: 'full-balance' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Threshold 100%' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Simpan budget' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Buat budget' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Kembali ke daftar budget' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Tampilkan budget arsip' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Pulihkan budget' }));
   });
 });
