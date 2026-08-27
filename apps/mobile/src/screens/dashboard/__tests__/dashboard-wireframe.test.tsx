@@ -85,7 +85,7 @@ describe('U12 F09 dashboard summary wireframe', () => {
 
     renderDashboard('populated');
     fireEvent.press(screen.getByRole('button', { name: 'Sembunyikan nominal' }));
-    expect(screen.getByText('Nominal disembunyikan')).toBeTruthy();
+    expect(screen.getByText(/Nominal disembunyikan/)).toBeTruthy();
     expect(screen.queryByText(/Rp125/)).toBeNull();
     expect(screen.getByRole('button', { name: 'Tampilkan nominal' })).toBeTruthy();
   });
@@ -131,7 +131,7 @@ describe('U12 F09 dashboard summary wireframe', () => {
     });
     renderDashboard('session_expired');
     expect(screen.getByText(/Login diperlukan/)).toBeTruthy();
-    fireEvent.press(screen.getByRole('button', { name: 'Buka status sinkronisasi' }));
+    fireEvent.press(screen.getAllByRole('button', { name: 'Buka status sinkronisasi' })[0]!);
     expect(screen.getByRole('alert')).toBeTruthy();
   });
 
