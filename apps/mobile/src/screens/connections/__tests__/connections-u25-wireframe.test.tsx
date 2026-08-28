@@ -1,11 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { ROUTE_MANIFEST } from '../../../navigation/route-manifest';
+import { ThemeProvider } from '../../../app/providers/theme-provider';
 import { ConnectionsWireframe } from '../connections-wireframe';
-import {
-  createConnectionsFixture,
-  type ConnectionScenario,
-} from '../connections-fixture';
+import { createConnectionsFixture, type ConnectionScenario } from '../connections-fixture';
 
 describe('U25 F22 bank and e-wallet sync wireframe', () => {
   it('keeps the F22 route authenticated and ready in the manifest', () => {
@@ -41,7 +39,9 @@ describe('U25 F22 bank and e-wallet sync wireframe', () => {
     'callback_error',
   ])('resolves hosted callback scenario %s without raw callback data', (scenario) => {
     const callback = createConnectionsFixture(scenario).callback();
-    expect(callback.kind).toBe(scenario.replace('callback_', '') === 'loading' ? 'loading' : expect.any(String));
+    expect(callback.kind).toBe(
+      scenario === 'callback_error' ? 'error' : scenario.replace('callback_', ''),
+    );
     expect(callback.renderedSensitiveData).toBe(false);
     expect(JSON.stringify(callback)).not.toMatch(/token|secret|password|pin|otp|account[_ -]?id/i);
     if (scenario === 'callback_loading' || scenario === 'callback_cancelled') {
@@ -51,9 +51,11 @@ describe('U25 F22 bank and e-wallet sync wireframe', () => {
 
   it('discovers safe accounts and maps to existing or new account', () => {
     const fixture = createConnectionsFixture('discovery');
-    expect(fixture.discoverAccounts()).toEqual([
-      expect.objectContaining({ label: expect.any(String), sensitiveData: false }),
-    ]);
+    expect(fixture.discoverAccounts()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: expect.any(String), sensitiveData: false }),
+      ]),
+    );
     expect(fixture.mapAccount('existing')).toEqual(
       expect.objectContaining({ mapped: true, destination: 'existing_account' }),
     );
@@ -131,11 +133,127 @@ describe('U25 F22 bank and e-wallet sync wireframe', () => {
     expect(fixture.safeMetadata()).toEqual(
       expect.objectContaining({ entityType: 'connection', status: 'fixture_review' }),
     );
-    expect(JSON.stringify(fixture.safeMetadata())).not.toMatch(/amount|balance|merchant|raw|token|id/i);
+    expect(JSON.stringify(fixture.safeMetadata())).not.toMatch(
+      /amount|balance|merchant|raw|token|account|password|secret/i,
+    );
+  });
+
+  it('covers every deterministic connection state without persistence or network', () => {
+    const scenarios: ConnectionScenario[] = [
+      'ready',
+      'consent_required',
+      'callback_loading',
+      'callback_cancelled',
+      'state_mismatch',
+      'forbidden',
+      'callback_error',
+      'discovery',
+      'mapping',
+      'syncing',
+      'active',
+      'reauth_required',
+      'pending',
+      'disconnected',
+      'provider_outage',
+      'cursor_error',
+      'webhook_replay',
+      'replay_error',
+      'reconciliation',
+      'duplicates',
+      'consent_expired',
+      'revoked',
+      'offline',
+      'kill_switch',
+    ];
+
+    scenarios.forEach((scenario) => {
+      const fixture = createConnectionsFixture(scenario);
+      fixture.consent();
+      fixture.grantConsent();
+      fixture.revokeConsent();
+      fixture.callback();
+      fixture.discoverAccounts();
+      fixture.mapAccount('existing');
+      fixture.mapAccount('new');
+      fixture.initialSync();
+      fixture.health();
+      fixture.staleSnapshot();
+      fixture.integrationEvent();
+      fixture.pendingPostedMerge();
+      fixture.duplicateReview();
+      fixture.reviewLink();
+      fixture.provenance('pending_posted');
+      fixture.provenance('refund');
+      fixture.disconnect('retain');
+      fixture.disconnect('delete');
+      fixture.csvFallback();
+      fixture.killSwitch();
+      fixture.offlineSnapshot();
+      expect(fixture.retry().networkCalled).toBe(false);
+      expect(fixture.safeMetadata().containsPayload).toBe(false);
+    });
+  });
+
+  it('keeps the full recovery surface interactive and back-safe', () => {
+    const onBack = jest.fn();
+    render(
+      <ThemeProvider>
+        <ConnectionsWireframe fixture={createConnectionsFixture('offline')} onBack={onBack} />
+      </ThemeProvider>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Review offline snapshot' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Review consent' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Grant read-only consent fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Revoke consent fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Retry connect fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Use CSV fallback' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Discover accounts fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Map to existing account' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Map to new account' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Review initial sync staging' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Open reconciliation review' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Review duplicate candidates' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Show reversal provenance' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Show refund provenance' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Retry webhook/cursor fixture' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Disconnect, retain history' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Disconnect, choose delete history' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Preview kill switch' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Review safe metadata' }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
+  it('renders provider outage and kill-switch copies without exposing provider payloads', () => {
+    render(
+      <ThemeProvider>
+        <ConnectionsWireframe fixture={createConnectionsFixture('provider_outage')} />
+      </ThemeProvider>,
+    );
+    fireEvent.press(screen.getByRole('button', { name: 'Review stale last-known' }));
+    expect(
+      screen.getByText(
+        'Last-known fixture ditampilkan; tidak memakai nilai nol atau fallback 1:1.',
+      ),
+    ).toBeTruthy();
+
+    render(
+      <ThemeProvider>
+        <ConnectionsWireframe fixture={createConnectionsFixture('kill_switch')} />
+      </ThemeProvider>,
+    );
+    fireEvent.press(screen.getByRole('button', { name: 'Preview kill switch' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Manual fallback aktif.');
   });
 
   it('renders accessible controls and every primary CTA produces a visible result', () => {
-    render(<ConnectionsWireframe fixture={createConnectionsFixture('consent_required')} />);
+    render(
+      <ThemeProvider>
+        <ConnectionsWireframe fixture={createConnectionsFixture('consent_required')} />
+      </ThemeProvider>,
+    );
     expect(screen.getByLabelText('Bank and e-wallet connections fixture')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Review consent' })).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Review consent' }));

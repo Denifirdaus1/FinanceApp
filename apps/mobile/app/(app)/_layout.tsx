@@ -21,6 +21,7 @@ export default function AppLayout() {
       <Tabs.Screen name="reports/insights" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       <Tabs.Screen name="profile/import-export" options={{ href: null }} />
+      <Tabs.Screen name="profile/connections" options={{ href: null }} />
       <Tabs.Screen name="capture" options={{ href: null }} />
       <Tabs.Screen name="screen-catalog" options={{ href: null }} />
       <Tabs.Screen name="accounts" options={{ href: null }} />
