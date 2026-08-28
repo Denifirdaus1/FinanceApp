@@ -27,7 +27,39 @@ export type SyncScenario =
   | 'non_retryable'
   | 'auto_merge'
   | 'critical_conflict'
-  | 'rollback';
+  | 'rollback'
+  | 'airplane'
+  | 'slow'
+  | 'flapping'
+  | 'online'
+  | 'lease_crashed'
+  | 'cursor_corrupt'
+  | 'database_corrupt'
+  | 'key_missing'
+  | 'stale'
+  | 'partial';
+
+export type OfflineFirstScenario = SyncScenario;
+export type NetworkMode = 'online' | 'airplane' | 'slow' | 'flapping';
+
+export interface SafeQueueMetadata extends SafePendingMutationMetadata {
+  scope: 'user' | 'household';
+  order: 'ordered' | 'blocked';
+  idempotency: 'stable';
+}
+
+export interface NetworkSnapshot {
+  mode: NetworkMode;
+  retryAfter: 'not_applicable' | 'fixture_backoff';
+  deterministic: true;
+}
+
+export interface AggregateSnapshot {
+  atomic: true;
+  partial: false;
+  ordering: 'per_aggregate';
+  retrySafe: true;
+}
 
 export type SyncState =
   | 'stored_on_device'
@@ -108,8 +140,21 @@ function stateFor(scenario: SyncScenario): SyncState {
   if (scenario === 'revoked' || scenario === 'retry_403') return 'revoked';
   if (scenario === 'kill_switch' || scenario === 'manual_only') return 'manual_only';
   if (scenario === 'retry_401') return 'syncing';
+  if (scenario === 'airplane') return 'offline';
+  if (scenario === 'slow' || scenario === 'flapping' || scenario === 'lease_crashed')
+    return 'syncing';
+  if (
+    scenario === 'cursor_corrupt' ||
+    scenario === 'database_corrupt' ||
+    scenario === 'key_missing'
+  )
+    return 'needs_review';
+  if (scenario === 'stale' || scenario === 'partial') return 'stored_on_device';
   if (scenario === 'local_only') return 'stored_on_device';
-  return scenario === 'ready' || scenario === 'empty' || scenario === 'auto_merge'
+  return scenario === 'ready' ||
+    scenario === 'online' ||
+    scenario === 'empty' ||
+    scenario === 'auto_merge'
     ? 'synced'
     : 'stored_on_device';
 }
@@ -121,6 +166,10 @@ function retryOutcomeFor(scenario: SyncScenario): RetryOutcome['kind'] {
   if (scenario === 'retry_409') return 'conflict_review';
   if (scenario === 'retry_429') return 'retry_after';
   if (scenario === 'retry_5xx' || scenario === 'failed') return 'backoff';
+  if (scenario === 'airplane') return 'offline';
+  if (scenario === 'slow') return 'retry_after';
+  if (scenario === 'flapping') return 'backoff';
+  if (scenario === 'lease_crashed') return 'success';
   if (scenario === 'non_retryable' || scenario === 'needs_review') return 'review_required';
   if (scenario === 'schema_incompatible') return 'schema_blocked';
   if (scenario === 'revoked') return 'access_revoked';
@@ -151,6 +200,7 @@ function safeQueueFor(scenario: SyncScenario): SafePendingMutationMetadata[] {
     'retry_403',
     'kill_switch',
     'manual_only',
+    'key_missing',
   ]);
   const review = new Set<SyncScenario>([
     'needs_review',
@@ -166,7 +216,10 @@ function safeQueueFor(scenario: SyncScenario): SafePendingMutationMetadata[] {
         ? 'blocked'
         : review.has(scenario)
           ? 'review'
-          : scenario === 'offline' || scenario === 'retry_5xx'
+          : scenario === 'offline' ||
+              scenario === 'airplane' ||
+              scenario === 'retry_5xx' ||
+              scenario === 'flapping'
             ? 'backoff'
             : 'ready',
       attempts: scenario === 'ready' ? 1 : 2,
@@ -189,7 +242,21 @@ export function syncStateLabel(state: SyncState): string {
 
 export function createSyncFixture(scenario: SyncScenario = 'ready') {
   const queue = safeQueueFor(scenario);
-  const retryCache = new Map<number, RetryOutcome>();
+  const retryCache = new Map<string, RetryOutcome>();
+  const networkMode: NetworkMode =
+    scenario === 'airplane'
+      ? 'airplane'
+      : scenario === 'slow'
+        ? 'slow'
+        : scenario === 'flapping'
+          ? 'flapping'
+          : 'online';
+  const safeQueue = queue.map((item, index): SafeQueueMetadata => ({
+    ...item,
+    scope: index % 2 === 0 ? 'user' : 'household',
+    order: index === 0 ? 'ordered' : 'blocked',
+    idempotency: 'stable',
+  }));
   return {
     scenario,
     status: {
@@ -203,8 +270,9 @@ export function createSyncFixture(scenario: SyncScenario = 'ready') {
     safePendingMetadata() {
       return queue.map((item) => ({ ...item }));
     },
-    retryMutation(index: number): RetryOutcome {
-      const cached = retryCache.get(index);
+    retryMutation(index: number | string): RetryOutcome {
+      const cacheKey = String(index);
+      const cached = retryCache.get(cacheKey);
       if (cached) return cached;
       const kind = retryOutcomeFor(scenario);
       const result: RetryOutcome = {
@@ -213,7 +281,7 @@ export function createSyncFixture(scenario: SyncScenario = 'ready') {
         idempotent: true,
         queueCount: kind === 'success' ? 0 : queue.length,
       };
-      retryCache.set(index, result);
+      retryCache.set(cacheKey, result);
       return result;
     },
     conflictReview(): ConflictReview {
@@ -264,7 +332,89 @@ export function createSyncFixture(scenario: SyncScenario = 'ready') {
     openManualGuide() {
       return { kind: 'manual_only' as const, message: 'Panduan retry manual fixture dibuka.' };
     },
+    safeQueueMetadata(): SafeQueueMetadata[] {
+      return safeQueue.map((item) => ({ ...item }));
+    },
+    networkSnapshot(): NetworkSnapshot {
+      return {
+        mode: networkMode,
+        retryAfter:
+          networkMode === 'slow' || networkMode === 'flapping'
+            ? 'fixture_backoff'
+            : 'not_applicable',
+        deterministic: true,
+      };
+    },
+    aggregateSnapshot(): AggregateSnapshot {
+      return { atomic: true, partial: false, ordering: 'per_aggregate', retrySafe: true };
+    },
+    recoverySnapshot() {
+      return {
+        resumable: true,
+        duplicateSafe: true,
+        source: scenario === 'lease_crashed' ? 'lease_released' : 'force_close_safe_reopen',
+      } as const;
+    },
+    conflictSnapshot() {
+      const critical = scenario === 'critical_conflict';
+      return {
+        mode: critical ? ('review' as const) : ('auto_merge' as const),
+        criticalField: critical ? ('amount' as const) : null,
+        requiresReview: critical,
+        blindLastWriteWins: false as const,
+      };
+    },
+    accessSnapshot() {
+      return {
+        locked: scenario === 'revoked' || scenario === 'retry_403',
+        purgeIsReal: false as const,
+        reauthRequired: scenario === 'revoked' || scenario === 'retry_401',
+      };
+    },
+    schemaSnapshot() {
+      return {
+        pushBlocked: scenario === 'schema_incompatible',
+        updateAvailable: scenario === 'schema_incompatible',
+        diagnosticSafe: true as const,
+      };
+    },
+    pullPage(cursor: string | null) {
+      const corrupt = scenario === 'cursor_corrupt' || cursor === 'bad-cursor';
+      return {
+        cursorAccepted: !corrupt,
+        recovery: corrupt ? ('restart_safe_cursor' as const) : ('continue_safe_cursor' as const),
+        tombstonesIncluded: true as const,
+        hasMore: false as const,
+        pageSizeBucket: 'small' as const,
+      };
+    },
+    scopeSnapshot() {
+      return {
+        user: 'available' as const,
+        household:
+          scenario === 'revoked' || scenario === 'database_corrupt'
+            ? ('locked' as const)
+            : ('available' as const),
+        separation: true as const,
+      };
+    },
+    databaseSnapshot() {
+      return {
+        keyState:
+          scenario === 'key_missing'
+            ? ('missing' as const)
+            : scenario === 'database_corrupt'
+              ? ('corrupt' as const)
+              : ('fixture_only' as const),
+        persistenceImplemented: false as const,
+        recovery: 'safe_manual_recovery' as const,
+      };
+    },
   };
 }
 
 export type SyncFixture = ReturnType<typeof createSyncFixture>;
+
+export function createOfflineFirstFixture(scenario: OfflineFirstScenario = 'ready'): SyncFixture {
+  return createSyncFixture(scenario);
+}

@@ -2,10 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { ThemeProvider } from '../../../app/providers/theme-provider';
 import { SyncWireframe } from '../sync-wireframe';
-import {
-  createOfflineFirstFixture,
-  type OfflineFirstScenario,
-} from '../sync-fixture';
+import { createOfflineFirstFixture, type OfflineFirstScenario } from '../sync-fixture';
 
 describe('U21 F18 offline-first synchronization wireframe contracts', () => {
   it('exposes safe queue metadata, scope separation, ordering, and idempotency', () => {
@@ -106,7 +103,7 @@ describe('U21 F18 offline-first synchronization wireframe contracts', () => {
     expect(screen.getByText(/Diagnostic aman/)).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Retry sync' }));
     expect(screen.getByRole('alert')).toBeTruthy();
-    fireEvent.press(screen.getByRole('button', { name: 'Export safe diagnostic' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Open diagnostic preview' }));
     expect(screen.getByRole('alert')).toBeTruthy();
     expect(screen.getByText(/320dp/)).toBeTruthy();
   });

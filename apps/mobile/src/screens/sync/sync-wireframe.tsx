@@ -37,6 +37,17 @@ function scenarioLabel(scenario: SyncScenario): string {
   if (scenario === 'retry_5xx' || scenario === 'failed')
     return 'Gagal: backoff fixture siap untuk retry.';
   if (scenario === 'rollback') return 'Aggregate rollback: tidak ada perubahan parsial.';
+  if (scenario === 'airplane') return 'Airplane mode: queue tetap lokal dan menunggu koneksi.';
+  if (scenario === 'slow') return 'Koneksi lambat: retry-after fixture ditampilkan.';
+  if (scenario === 'flapping') return 'Koneksi tidak stabil: backoff fixture aktif.';
+  if (scenario === 'lease_crashed')
+    return 'Worker berhenti; lease fixture dapat dilanjutkan dengan aman.';
+  if (scenario === 'cursor_corrupt')
+    return 'Cursor tidak valid; pull dimulai ulang dengan cursor aman.';
+  if (scenario === 'database_corrupt') return 'Database lokal fixture perlu pemeriksaan manual.';
+  if (scenario === 'key_missing') return 'Kunci lokal fixture tidak tersedia; data tetap terkunci.';
+  if (scenario === 'stale') return 'Data lokal stale; cakupan terakhir ditampilkan dengan jujur.';
+  if (scenario === 'partial') return 'Cakupan sinkronisasi sebagian; review diperlukan.';
   return 'Fixture aman: tidak ada network atau payload finansial.';
 }
 
@@ -105,6 +116,43 @@ export function SyncWireframe({ fixture: suppliedFixture, onBack }: SyncWirefram
             label="Review conflicts"
             variant="secondary"
             onPress={() => setView('conflicts')}
+          />
+        </Card>
+
+        <Card padding="space4" style={styles.card}>
+          <Text style={[tokens.typography.heading2, { color: tokens.colors.textPrimary }]}>
+            Sync recovery
+          </Text>
+          <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
+            Mode jaringan: {fixture.networkSnapshot().mode}. Pull cursor dan tombstone diproses
+            sebagai fixture aman.
+          </Text>
+          <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>
+            Scope user: {fixture.scopeSnapshot().user} · household:{' '}
+            {fixture.scopeSnapshot().household}
+          </Text>
+          <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>
+            Database key: {fixture.databaseSnapshot().keyState} · ordering:{' '}
+            {fixture.aggregateSnapshot().ordering}
+          </Text>
+          <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>
+            Diagnostic aman: codes dan timing saja; payload tidak disertakan.
+          </Text>
+          <Button
+            label="Open diagnostic preview"
+            variant="secondary"
+            onPress={() => setNotice(fixture.exportDiagnostic().message)}
+          />
+          <Button
+            label="Review local recovery"
+            variant="secondary"
+            onPress={() =>
+              setNotice(
+                fixture.recoverySnapshot().duplicateSafe
+                  ? 'Recovery fixture siap dilanjutkan tanpa duplikasi.'
+                  : 'Recovery perlu pemeriksaan.',
+              )
+            }
           />
         </Card>
 
