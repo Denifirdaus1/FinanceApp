@@ -31,6 +31,12 @@ export default function ProfileScreen() {
         style={{ marginTop: tokens.spacing.space6, alignSelf: 'flex-start' }}
       />
       <Button
+        label="Open notifications"
+        onPress={() => router.push('/notifications')}
+        style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}
+        variant="secondary"
+      />
+      <Button
         label="Open screen catalog"
         onPress={() => router.push('/screen-catalog')}
         style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}

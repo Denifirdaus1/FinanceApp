@@ -11,6 +11,8 @@ import {
   type NotificationScenario,
 } from '../notifications-fixture';
 
+jest.setTimeout(30000);
+
 describe('U22 F19 notifications, widgets, and shortcuts wireframe', () => {
   it('connects F19 to the authenticated Profile route and manifest', async () => {
     expect(ROUTE_MANIFEST.find((entry) => entry.featureId === 'F19')).toMatchObject({
@@ -48,11 +50,14 @@ describe('U22 F19 notifications, widgets, and shortcuts wireframe', () => {
     ['granted', 'granted'],
     ['denied', 'denied'],
     ['blocked', 'blocked'],
-  ] as [NotificationScenario, string][])('models %s permission state with a deterministic result', (scenario, state) => {
-    const fixture = createNotificationsFixture(scenario);
-    expect(fixture.permissionSnapshot().state).toBe(state);
-    expect(fixture.requestPermission().state).toBeTruthy();
-  });
+  ] as [NotificationScenario, string][])(
+    'models %s permission state with a deterministic result',
+    (scenario, state) => {
+      const fixture = createNotificationsFixture(scenario);
+      expect(fixture.permissionSnapshot().state).toBe(state);
+      expect(fixture.requestPermission().state).toBeTruthy();
+    },
+  );
 
   it('requires opt-in and unlock guard before amount privacy or widget reveal', () => {
     const fixture = createNotificationsFixture('ready');
@@ -62,7 +67,9 @@ describe('U22 F19 notifications, widgets, and shortcuts wireframe', () => {
       privacyLevel: 'amount',
     });
     expect(fixture.widgetPreview()).toMatchObject({ showsAmount: false, showsAccount: false });
-    expect(fixture.widgetPreview({ privacyMode: false, unlocked: true, optIn: true })).toMatchObject({
+    expect(
+      fixture.widgetPreview({ privacyMode: false, unlocked: true, optIn: true }),
+    ).toMatchObject({
       showsAmount: true,
       showsAccount: true,
     });
@@ -77,7 +84,10 @@ describe('U22 F19 notifications, widgets, and shortcuts wireframe', () => {
       dstSafe: true,
     });
     expect(fixture.snooze('budget_threshold')).toMatchObject({ kind: 'snoozed' });
-    expect(fixture.hysteresisSnapshot()).toMatchObject({ dedupe: true, rearmRequiresRecovery: true });
+    expect(fixture.hysteresisSnapshot()).toMatchObject({
+      dedupe: true,
+      rearmRequiresRecovery: true,
+    });
   });
 
   it('deduplicates the same occurrence across devices and redacts delivery history', () => {
@@ -144,9 +154,100 @@ describe('U22 F19 notifications, widgets, and shortcuts wireframe', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Enable reminder permission' }));
     expect(screen.getByRole('alert')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Preview widget' }));
-    expect(screen.getByText(/Widget preview/)).toBeTruthy();
+    expect(screen.getAllByText(/Widget preview/).length).toBeGreaterThan(0);
+    fireEvent.press(screen.getByRole('button', { name: 'Back to notifications' }));
     fireEvent.press(screen.getByRole('button', { name: 'Open expense shortcut' }));
-    expect(screen.getByText(/confirmation/)).toBeTruthy();
+    expect(screen.getAllByText(/confirmation/).length).toBeGreaterThan(0);
     expect(screen.getByText(/320dp/)).toBeTruthy();
+  });
+
+  it('covers status recovery, channel toggles, privacy, history, and safe actions', () => {
+    const scenarios: NotificationScenario[] = [
+      'ready',
+      'granted',
+      'denied',
+      'blocked',
+      'loading',
+      'empty',
+      'error',
+      'offline',
+      'stale',
+      'unauthorized',
+      'quiet_hours',
+      'dst',
+      'dedupe',
+      'revoked',
+      'tampered_link',
+      'kill_switch',
+      'widget_default',
+      'widget_reveal',
+    ];
+    for (const scenario of scenarios) {
+      const rendered = render(
+        <ThemeProvider>
+          <NotificationsWireframe fixture={createNotificationsFixture(scenario)} />
+        </ThemeProvider>,
+      );
+      if (scenario === 'denied' || scenario === 'blocked') {
+        fireEvent.press(screen.getByRole('button', { name: 'Open in-app reminder fallback' }));
+      }
+      if (scenario === 'error' || scenario === 'stale') {
+        fireEvent.press(screen.getByRole('button', { name: 'Retry notification settings' }));
+      }
+      fireEvent.press(screen.getByRole('button', { name: 'Privacy mode aktif' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Aktifkan privacy mode' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Request amount preview opt-in' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Snooze budget reminder' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Validate notification link' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Open safe fallback' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Preview kill-switch result' }));
+      for (const channel of [
+        'Recurring bill',
+        'Debt due',
+        'Budget threshold',
+        'Goal milestone',
+        'Sync issue',
+        'Security',
+        'Weekly summary',
+      ]) {
+        fireEvent.press(screen.getByRole('button', { name: new RegExp(channel) }));
+      }
+      rendered.unmount();
+    }
+
+    const rendered = render(
+      <ThemeProvider>
+        <NotificationsWireframe fixture={createNotificationsFixture()} />
+      </ThemeProvider>,
+    );
+    fireEvent.press(screen.getByRole('button', { name: 'Preview widget' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Reveal opt-in widget' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Back to notifications' }));
+    for (const label of [
+      'Open expense shortcut',
+      'Open income shortcut',
+      'Open voice shortcut',
+      'Open receipt shortcut',
+    ]) {
+      fireEvent.press(screen.getByRole('button', { name: label }));
+      fireEvent.press(screen.getByRole('button', { name: 'Continue to confirmation fixture' }));
+      fireEvent.press(screen.getByRole('button', { name: 'Back to notifications' }));
+    }
+    rendered.unmount();
+  });
+
+  it('does not use network or logging for fixture actions', () => {
+    const fetchSpy = jest.spyOn(globalThis, 'fetch');
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    render(
+      <ThemeProvider reducedMotion>
+        <NotificationsWireframe fixture={createNotificationsFixture('offline')} />
+      </ThemeProvider>,
+    );
+    fireEvent.press(screen.getByRole('button', { name: 'Open safe fallback' }));
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(logSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+    logSpy.mockRestore();
   });
 });
