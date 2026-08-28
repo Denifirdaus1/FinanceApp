@@ -81,7 +81,11 @@ describe('U24 F21 AI insights and financial assistant wireframe', () => {
 
   it('requires household and time range scope confirmation before assistant tools', () => {
     const fixture = createAiInsightsFixture('consented');
-    expect(fixture.assistantScope()).toMatchObject({ confirmed: false, household: 'current', timeRange: 'needs_confirmation' });
+    expect(fixture.assistantScope()).toMatchObject({
+      confirmed: false,
+      household: 'current',
+      timeRange: 'needs_confirmation',
+    });
     expect(fixture.confirmScope({ household: 'current', timeRange: 'this_month' })).toMatchObject({
       confirmed: true,
       safe: true,
@@ -125,23 +129,39 @@ describe('U24 F21 AI insights and financial assistant wireframe', () => {
     ['access_error', 'access_error'],
     ['kill_switch', 'kill_switch'],
     ['revoked', 'consent_revoked'],
-  ] as [AssistantScenario, string][])('handles %s with deterministic safe recovery', (scenario, kind) => {
-    expect(createAiInsightsFixture(scenario).ask('safe question')).toMatchObject({
-      kind,
-      fallbackAvailable: true,
-      networkCalled: false,
-    });
-  });
+  ] as [AssistantScenario, string][])(
+    'handles %s with deterministic safe recovery',
+    (scenario, kind) => {
+      expect(createAiInsightsFixture(scenario).ask('safe question')).toMatchObject({
+        kind,
+        fallbackAvailable: true,
+        networkCalled: false,
+      });
+    },
+  );
 
   it('supports feedback, clear, retention choice, revoke/delete, and safe draft handoff', () => {
     const fixture = createAiInsightsFixture('consented');
     expect(fixture.retentionChoice('local_only')).toMatchObject({ retention: 'local_only' });
     expect(fixture.feedback('helpful')).toMatchObject({ kind: 'recorded', rating: 'helpful' });
-    expect(fixture.draftAction('budget')).toMatchObject({ destination: '/budgets', requiresConfirmation: true, autoSaved: false });
-    expect(fixture.draftAction('category')).toMatchObject({ destination: '/categories', requiresConfirmation: true });
-    expect(fixture.draftAction('rule')).toMatchObject({ destination: '/categories', requiresConfirmation: true });
+    expect(fixture.draftAction('budget')).toMatchObject({
+      destination: '/budgets',
+      requiresConfirmation: true,
+      autoSaved: false,
+    });
+    expect(fixture.draftAction('category')).toMatchObject({
+      destination: '/categories',
+      requiresConfirmation: true,
+    });
+    expect(fixture.draftAction('rule')).toMatchObject({
+      destination: '/categories',
+      requiresConfirmation: true,
+    });
     expect(fixture.clearConversation()).toMatchObject({ cleared: true, localOnly: true });
-    expect(fixture.revokeConsent()).toMatchObject({ processingStopped: true, deletionStarted: true });
+    expect(fixture.revokeConsent()).toMatchObject({
+      processingStopped: true,
+      deletionStarted: true,
+    });
     expect(fixture.deleteAssistantData()).toMatchObject({ requested: true, serverCalled: false });
   });
 
@@ -154,7 +174,9 @@ describe('U24 F21 AI insights and financial assistant wireframe', () => {
       amountsIncluded: false,
       sourceIdsIncluded: false,
     });
-    expect(JSON.stringify(fixture.safeRoute('insights'))).not.toMatch(/amount|merchant|source|identifier|prompt/i);
+    expect(JSON.stringify(fixture.safeRoute('insights'))).not.toMatch(
+      /amount|merchant|source|identifier|prompt/i,
+    );
   });
 
   it('renders accessible fixture controls and every action has a visible result', () => {
@@ -176,7 +198,7 @@ describe('U24 F21 AI insights and financial assistant wireframe', () => {
       'Cabut consent AI',
       'Buka laporan deterministik',
     ]) {
-      fireEvent.press(screen.getByRole('button', { name: label }));
+      fireEvent.press(screen.getAllByRole('button', { name: label })[0]!);
     }
     expect(screen.getByRole('alert')).toBeTruthy();
     expect(screen.getByText(/320dp/)).toBeTruthy();
@@ -198,5 +220,35 @@ describe('U24 F21 AI insights and financial assistant wireframe', () => {
     expect(fixture.safeRoute('assistant')).toMatchObject({ containsSensitiveData: false });
     fetchSpy.mockRestore();
     logSpy.mockRestore();
+  });
+
+  it('covers fallback navigation, privacy toggle, weekly selection, and recovery callbacks', () => {
+    const onBack = jest.fn();
+    const onOpenReport = jest.fn();
+    render(
+      <ThemeProvider>
+        <AiInsightsWireframe
+          fixture={createAiInsightsFixture('privacy_masked')}
+          onBack={onBack}
+          onOpenReport={onOpenReport}
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.press(screen.getByRole('button', { name: 'Kembali dari AI insights' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Insight mingguan' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Tampilkan nilai fixture' }));
+    fireEvent.press(screen.getAllByRole('button', { name: 'Buka laporan deterministik' })[0]!);
+    fireEvent.press(screen.getAllByRole('button', { name: 'Cabut consent AI' })[0]!);
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(onOpenReport).toHaveBeenCalledTimes(1);
+
+    render(
+      <ThemeProvider>
+        <AiInsightsWireframe fixture={createAiInsightsFixture('ready')} />
+      </ThemeProvider>,
+    );
+    fireEvent.press(screen.getAllByRole('button', { name: 'Buka laporan deterministik' })[0]!);
+    fireEvent.press(screen.getByRole('button', { name: 'Kembali dari AI insights' }));
+    expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
   });
 });

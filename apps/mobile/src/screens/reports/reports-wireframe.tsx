@@ -21,6 +21,7 @@ type ReportTransactionRoute = '/transactions';
 export interface ReportsWireframeProps {
   fixture?: ReportsFixture;
   onDrillDown?: (route: ReportTransactionRoute) => void;
+  onOpenInsights?: () => void;
 }
 
 const RANGES: { id: ReportRange; label: string }[] = [
@@ -48,7 +49,11 @@ function displayMoney(minor: string, hidden: boolean): string {
   return formatReportMoney(minor) ?? '—';
 }
 
-export function ReportsWireframe({ fixture: suppliedFixture, onDrillDown }: ReportsWireframeProps) {
+export function ReportsWireframe({
+  fixture: suppliedFixture,
+  onDrillDown,
+  onOpenInsights,
+}: ReportsWireframeProps) {
   const { tokens, reducedMotion } = useTheme();
   const [fallbackFixture] = useState(() => createReportsFixture());
   const fixture = suppliedFixture ?? fallbackFixture;
@@ -96,6 +101,13 @@ export function ReportsWireframe({ fixture: suppliedFixture, onDrillDown }: Repo
           variant="secondary"
           onPress={togglePrivacy}
           accessibilityLabel={privacyMode ? 'Tampilkan nominal' : 'Sembunyikan nominal'}
+          style={styles.headerAction}
+        />
+        <Button
+          label="Buka AI insights"
+          variant="secondary"
+          onPress={() => onOpenInsights?.() ?? setNotice('AI insights fixture dibuka.')}
+          accessibilityLabel="Buka AI insights"
           style={styles.headerAction}
         />
       </View>
