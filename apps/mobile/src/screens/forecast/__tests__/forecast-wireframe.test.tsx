@@ -65,8 +65,12 @@ describe('U18 F15 calendar and forecast wireframe', () => {
     expect(generateMonthGrid(2026, 0, 1)[0]).toMatch(/^2025-12-/);
     expect(formatForecastMoney('1000000', 'IDR')).toContain('1.000.000');
     expect(validateScenario(validScenario)).toEqual([]);
-    expect(validateScenario({ ...validScenario, name: '' })).toContain('Nama scenario wajib diisi.');
-    expect(validateScenario({ ...validScenario, horizonDays: 367 })).toContain('Horizon maksimal 366 hari.');
+    expect(validateScenario({ ...validScenario, name: '' })).toContain(
+      'Nama scenario wajib diisi.',
+    );
+    expect(validateScenario({ ...validScenario, horizonDays: 367 })).toContain(
+      'Horizon maksimal 366 hari.',
+    );
   });
 
   it('applies event provenance, source priority, transfer consolidation, and partial FX safely', () => {
@@ -74,38 +78,105 @@ describe('U18 F15 calendar and forecast wireframe', () => {
     const events = fixture.events();
     expect(events.filter((event) => event.applied)).toHaveLength(3);
     expect(events.find((event) => event.type === 'transfer')?.consolidatedDelta).toBe('0');
-    expect(events.find((event) => event.type === 'recurring')?.suppressedBy).toBe('transaction-fixture');
+    expect(events.find((event) => event.type === 'recurring')?.suppressedBy).toBe(
+      'transaction-fixture',
+    );
     expect(events.find((event) => event.type === 'goal_boundary')?.applied).toBe(false);
-    expect(fixture.curves()).toMatchObject({ perAccount: expect.any(Array), consolidated: expect.any(Array), formulaVersion: 'fixture-v1' });
+    expect(fixture.curves()).toMatchObject({
+      perAccount: expect.any(Array),
+      consolidated: expect.any(Array),
+      formulaVersion: 'fixture-v1',
+    });
     expect(fixture.curves().consolidated.some((point) => point.status === 'partial')).toBe(false);
-    expect(createForecastFixture('partial_fx').curves().consolidated[0]).toMatchObject({ status: 'partial' });
-    expect(applyForecastEvents('1000000', [{ signedMinor: '-200000', applied: true }, { signedMinor: '500000', applied: true }])).toBe('1300000');
-    expect(fixture.disclosure()).toMatchObject({ asOf: '2026-08-28', timezone: 'Asia/Jakarta', coverage: 'fixture-local' });
+    expect(createForecastFixture('partial_fx').curves().consolidated[0]).toMatchObject({
+      status: 'partial',
+    });
+    expect(
+      applyForecastEvents('1000000', [
+        { signedMinor: '-200000', applied: true },
+        { signedMinor: '500000', applied: true },
+      ]),
+    ).toBe('1300000');
+    expect(fixture.disclosure()).toMatchObject({
+      asOf: '2026-08-28',
+      timezone: 'Asia/Jakarta',
+      coverage: 'fixture-local',
+    });
   });
 
   it('keeps pending, recurring, debt, goal, overdue, and duplicate suppression explicit', () => {
     const fixture = createForecastFixture('overdue');
     expect(fixture.events().find((event) => event.type === 'overdue')?.applied).toBe(false);
-    expect(fixture.events().find((event) => event.type === 'pending')?.classification).toBe('projected');
-    expect(fixture.events().find((event) => event.type === 'debt_due')?.suppressedBy).toBe('recurring-fixture');
-    expect(fixture.events().filter((event) => event.type === 'recurring' && event.suppressedBy)).toHaveLength(1);
-    expect(fixture.lowBalance()).toMatchObject({ marker: 'neutral', dedupeKey: expect.any(String) });
+    expect(fixture.events().find((event) => event.type === 'pending')?.classification).toBe(
+      'projected',
+    );
+    expect(fixture.events().find((event) => event.type === 'debt_due')?.suppressedBy).toBe(
+      'recurring-fixture',
+    );
+    expect(
+      fixture.events().filter((event) => event.type === 'recurring' && event.suppressedBy),
+    ).toHaveLength(1);
+    expect(fixture.lowBalance()).toMatchObject({
+      marker: 'neutral',
+      dedupeKey: expect.any(String),
+    });
   });
 
   it('supports scenario validation, toggles, overrides, reset, and safe retry without base mutation', () => {
     const fixture = createForecastFixture();
     const scenario = fixture.createScenario(validScenario);
     expect(scenario.status).toBe('saved_fixture');
-    const override = fixture.override(scenario, { sourceEventKey: 'event-projected', date: '2026-09-01', amountMinor: '250000' });
+    const override = fixture.override(scenario, {
+      sourceEventKey: 'event-projected',
+      date: '2026-09-01',
+      amountMinor: '250000',
+    });
     expect(override.actualChanged).toBe(false);
     expect(fixture.reset(scenario).overrides).toEqual([]);
     expect(fixture.drag('event-actual')).toMatchObject({ status: 'rejected_actual' });
     expect(fixture.drag('event-projected')).toMatchObject({ status: 'scenario_override' });
-    expect(createForecastFixture('offline').createScenario(validScenario)).toMatchObject({ status: 'queued' });
-    expect(createForecastFixture('conflict').createScenario(validScenario)).toMatchObject({ status: 'needs_re_review' });
-    expect(createForecastFixture('unauthorized').createScenario(validScenario)).toMatchObject({ status: 'unauthorized' });
+    expect(createForecastFixture('offline').createScenario(validScenario)).toMatchObject({
+      status: 'queued',
+    });
+    expect(createForecastFixture('conflict').createScenario(validScenario)).toMatchObject({
+      status: 'needs_re_review',
+    });
+    expect(createForecastFixture('unauthorized').createScenario(validScenario)).toMatchObject({
+      status: 'unauthorized',
+    });
     expect(createForecastFixture('recomputing').retry()).toMatchObject({ kind: 'recomputed' });
-    expect(fixture.killSwitch()).toMatchObject({ calendarAvailable: true, forecastAvailable: false });
+    expect(fixture.killSwitch()).toMatchObject({
+      calendarAvailable: true,
+      forecastAvailable: false,
+    });
+  });
+
+  it('rejects malformed overrides and applies filters atomically', () => {
+    expect(
+      validateScenario({
+        ...validScenario,
+        overrides: [{ sourceEventKey: 'event-projected', date: '2026-02-30', amountMinor: '01' }],
+      }),
+    ).toEqual(['Tanggal override tidak valid.', 'Nominal override harus minor unit canonical.']);
+    expect(validateScenario({ ...validScenario, name: 'x'.repeat(81) })).toContain(
+      'Nama scenario wajib diisi.',
+    );
+    expect(isValidHorizon(1.5)).toBe(false);
+    expect(createForecastFixture('empty').events()).toEqual([]);
+    expect(createForecastFixture('loading').events()).toEqual([]);
+    const fixture = createForecastFixture();
+    expect(
+      fixture.override(
+        {},
+        { sourceEventKey: 'event-projected', date: '2026-09-01', amountMinor: '1' },
+      ),
+    ).toMatchObject({ actualChanged: false });
+    expect(fixture.filter({ account: true, category: false, projected: true })).toMatchObject({
+      activeCount: 2,
+      appliedAtomically: true,
+    });
+    expect(fixture.drillDown()).toMatchObject({ route: '/transactions', safe: true });
+    expect(createForecastFixture().retry()).toMatchObject({ kind: 'refreshed' });
   });
 
   it.each([
@@ -136,7 +207,15 @@ describe('U18 F15 calendar and forecast wireframe', () => {
     expect(screen.getByText('Agenda harian fixture')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', { name: 'Forecast' }));
     expect(screen.getByText('Forecast saldo fixture')).toBeTruthy();
-    for (const name of ['7 hari', '30 hari', '90 hari', '365 hari', 'Filter event', 'Tampilkan pending', 'Sembunyikan pending']) {
+    for (const name of [
+      '7 hari',
+      '30 hari',
+      '90 hari',
+      '365 hari',
+      'Filter event',
+      'Tampilkan pending',
+      'Sembunyikan pending',
+    ]) {
       fireEvent.press(screen.getByRole('button', { name }));
     }
     fireEvent.press(screen.getByRole('button', { name: 'Buat scenario' }));
