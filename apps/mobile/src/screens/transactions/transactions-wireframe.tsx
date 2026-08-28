@@ -383,6 +383,13 @@ export function TransactionsWireframe({
           accessibilityLabel="Operasi transfer & saldo"
           style={styles.action}
         />
+        <Button
+          label="Cari, review & rekonsiliasi"
+          variant="secondary"
+          onPress={() => router.push('/transactions/review')}
+          accessibilityLabel="Cari, review & rekonsiliasi"
+          style={styles.action}
+        />
       </>
     );
   };
