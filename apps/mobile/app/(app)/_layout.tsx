@@ -19,6 +19,7 @@ export default function AppLayout() {
       <Tabs.Screen name="planning" options={{ title: 'Planning' }} />
       <Tabs.Screen name="reports" options={{ title: 'Reports' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="profile/import-export" options={{ href: null }} />
       <Tabs.Screen name="capture" options={{ href: null }} />
       <Tabs.Screen name="screen-catalog" options={{ href: null }} />
       <Tabs.Screen name="accounts" options={{ href: null }} />

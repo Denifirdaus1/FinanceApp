@@ -37,6 +37,12 @@ export default function ProfileScreen() {
         variant="secondary"
       />
       <Button
+        label="Open import export"
+        onPress={() => router.push('/profile/import-export')}
+        style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}
+        variant="secondary"
+      />
+      <Button
         label="Open screen catalog"
         onPress={() => router.push('/screen-catalog')}
         style={{ marginTop: tokens.spacing.space4, alignSelf: 'flex-start' }}
