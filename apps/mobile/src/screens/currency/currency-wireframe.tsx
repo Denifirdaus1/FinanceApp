@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Button, Card, Input } from '@financeapp/ui';
+import { Button, Card, Input, SensitiveValue } from '@financeapp/ui';
 
 import { useTheme } from '../../app/providers/theme-provider';
 import {
   CURRENCY_LAYOUT,
-  createCurrencyFixture,
+  createMultiCurrencyFixture,
   type CurrencyFixture,
   type CurrencyState,
 } from './currency-fixture';
@@ -52,11 +52,12 @@ function stateLabel(state: CurrencyState): string {
 
 export function CurrencyWireframe({ fixture: suppliedFixture, onBack }: CurrencyWireframeProps) {
   const { tokens, reducedMotion } = useTheme();
-  const [fallbackFixture] = useState(() => createCurrencyFixture());
+  const [fallbackFixture] = useState(() => createMultiCurrencyFixture());
   const fixture = suppliedFixture ?? fallbackFixture;
   const [view, setView] = useState<CurrencyView>('hub');
   const [notice, setNotice] = useState('');
   const [manualRate, setManualRate] = useState('112.3456');
+  const [privacyMode, setPrivacyMode] = useState(false);
 
   const renderHeader = (
     title: string,
@@ -124,6 +125,18 @@ export function CurrencyWireframe({ fixture: suppliedFixture, onBack }: Currency
         <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
           Akun JPY: JPY · read-only; migration flow deferred.
         </Text>
+        <Text style={[tokens.typography.heading3, { color: tokens.colors.textPrimary }]}>
+          Currency metadata picker (fixture)
+        </Text>
+        {fixture.currencyPicker().map((currency) => (
+          <Button
+            key={currency.code}
+            label={`${currency.code} · ${currency.localizedName} · exponent ${currency.exponent}`}
+            variant="secondary"
+            onPress={() => setNotice(`${currency.code} dipilih untuk draft fixture.`)}
+            accessibilityLabel={`Pilih currency ${currency.code}`}
+          />
+        ))}
         <Button label="Review base currency" onPress={() => setView('settings-review')} />
       </Card>
     </>
@@ -208,7 +221,18 @@ export function CurrencyWireframe({ fixture: suppliedFixture, onBack }: Currency
             Dikonversi ke IDR menggunakan rate manual / tanggal fixture.
           </Text>
           <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
-            Original expense: ¥1.000 · report IDR: {fixture.transactionPreview().reportAmountMinor}
+            Original transaction amount
+          </Text>
+          <SensitiveValue value="JPY 1.000" hidden={privacyMode} />
+          <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
+            Converted display
+          </Text>
+          <SensitiveValue
+            value={`IDR ${fixture.transactionPreview().reportAmountMinor}`}
+            hidden={privacyMode}
+          />
+          <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>
+            Provenance: {fixture.transactionPreview().rateSource} · as-of fixture timestamp.
           </Text>
           <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>
             {report.kind === 'partial'
@@ -238,7 +262,7 @@ export function CurrencyWireframe({ fixture: suppliedFixture, onBack }: Currency
       {renderHeader('Cross-currency transfer (fixture)')}
       <Card padding="space4" style={styles.card}>
         <Text style={[tokens.typography.body, { color: tokens.colors.textPrimary }]}>
-          Source: JPY 1.000 → destination: IDR 1.123.456 fixture
+          Source and destination amounts are preserved in original currencies.
         </Text>
         <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
           Rate 112.3456 · source manual · timestamp fixture
@@ -262,8 +286,10 @@ export function CurrencyWireframe({ fixture: suppliedFixture, onBack }: Currency
         <Text style={[tokens.typography.body, { color: tokens.colors.textPrimary }]}>
           Original amounts dan rate provenance dipertahankan.
         </Text>
-        <Text style={[tokens.typography.body, { color: tokens.colors.textSecondary }]}>
-          JPY −1.000 · IDR +1.123.456 · transfer bukan income.
+        <SensitiveValue value="JPY −1.000" hidden={privacyMode} />
+        <SensitiveValue value="IDR +1.123.456" hidden={privacyMode} />
+        <Text style={[tokens.typography.caption, { color: tokens.colors.textSecondary }]}>
+          Transfer bukan income.
         </Text>
         <Button
           label="Confirm cross-currency transfer"
@@ -300,6 +326,13 @@ export function CurrencyWireframe({ fixture: suppliedFixture, onBack }: Currency
 
   return (
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <Button
+        label={privacyMode ? 'Nominal disembunyikan' : 'Sembunyikan nominal'}
+        variant="tertiary"
+        onPress={() => setPrivacyMode((current) => !current)}
+        accessibilityLabel={privacyMode ? 'Nominal disembunyikan' : 'Sembunyikan nominal'}
+        style={styles.privacyButton}
+      />
       {view === 'hub' ? renderHub() : null}
       {view === 'settings' ? renderSettings() : null}
       {view === 'settings-review' ? renderSettingsReview() : null}
@@ -333,4 +366,5 @@ const styles = StyleSheet.create({
   header: { gap: 8 },
   card: { gap: 12 },
   notice: { paddingVertical: 8 },
+  privacyButton: { alignSelf: 'flex-start' },
 });

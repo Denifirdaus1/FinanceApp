@@ -130,6 +130,19 @@ export type CrossCurrencyCommitResult =
   | { kind: 'needs_re_review'; message: string }
   | { kind: 'synced'; mutationId: string; atomic: true; partialLegs: false };
 
+export type TransferValidationResult =
+  | { valid: true; reason: 'valid' }
+  | {
+      valid: false;
+      reason:
+        | 'unsupported_currency'
+        | 'account_currency_mismatch'
+        | 'same_account'
+        | 'invalid_amount'
+        | 'invalid_rate'
+        | 'future_rate';
+    };
+
 function metadataFor(code: string): CurrencyMetadata | null {
   return CURRENCY_CATALOG.find((item) => item.code === code) ?? null;
 }
@@ -299,12 +312,58 @@ export function createCurrencyFixture(scenario: CurrencyScenario = 'ready') {
     metadata(code: string) {
       return metadataFor(code);
     },
+    currencyPicker() {
+      return CURRENCY_CATALOG.map((item) => ({ ...item }));
+    },
+    currencyMetadata(code: string) {
+      return metadataFor(code);
+    },
     accountCurrency(accountId: string) {
       const account = accounts.find((item) => item.accountId === accountId);
       return account ? { currency: account.currency, readOnly: account.hasActivity } : null;
     },
+    updateAccountCurrency(accountId: string, currency: string) {
+      const account = accounts.find((item) => item.accountId === accountId);
+      if (!metadataFor(currency)) return { kind: 'unsupported_currency' as const };
+      if (!account) return { kind: 'unknown_account' as const };
+      if (account.hasActivity) return { kind: 'read_only_activity' as const };
+      return { kind: 'updated' as const, currency };
+    },
     setReferenceRate(quote: FxQuote) {
       latestQuote = quote;
+    },
+    provenanceRoundTrip(quote: FxQuote) {
+      const exported = JSON.stringify(quote);
+      const restored = JSON.parse(exported) as FxQuote;
+      return { exported, restored, unchanged: JSON.stringify(restored) === exported };
+    },
+    validateTransfer(draft: CrossCurrencyTransferDraft): TransferValidationResult {
+      const source = accounts.find((item) => item.accountId === draft.sourceAccountId);
+      const destination = accounts.find((item) => item.accountId === draft.destinationAccountId);
+      if (!metadataFor(draft.sourceCurrency) || !metadataFor(draft.destinationCurrency))
+        return { valid: false, reason: 'unsupported_currency' };
+      if (draft.sourceAccountId === draft.destinationAccountId)
+        return { valid: false, reason: 'same_account' };
+      if (
+        !source ||
+        !destination ||
+        source.currency !== draft.sourceCurrency ||
+        destination.currency !== draft.destinationCurrency
+      )
+        return { valid: false, reason: 'account_currency_mismatch' };
+      if (!parseMinor(draft.sourceAmountMinor) || !parseMinor(draft.destinationAmountMinor))
+        return { valid: false, reason: 'invalid_amount' };
+      const quoteErrors = validateFxQuote({
+        base: draft.sourceCurrency,
+        quote: draft.destinationCurrency,
+        rate: draft.rate,
+        effectiveAt: draft.effectiveAt,
+        source: draft.rateSource,
+      });
+      if (quoteErrors.some((error) => error.includes('masa depan')))
+        return { valid: false, reason: 'future_rate' };
+      if (quoteErrors.length > 0) return { valid: false, reason: 'invalid_rate' };
+      return { valid: true, reason: 'valid' };
     },
     saveBaseCurrency(draft: BaseCurrencyDraft, confirmed: boolean): BaseCurrencySaveResult {
       const errors = validateBaseCurrencyDraft(draft);
@@ -448,3 +507,7 @@ export function createCurrencyFixture(scenario: CurrencyScenario = 'ready') {
 }
 
 export type CurrencyFixture = ReturnType<typeof createCurrencyFixture>;
+
+export function createMultiCurrencyFixture(scenario: CurrencyScenario = 'ready'): CurrencyFixture {
+  return createCurrencyFixture(scenario);
+}
